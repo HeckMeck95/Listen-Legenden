@@ -85,3 +85,23 @@ Links habt ihr noch die EInstellungen für den Timer. Ihr könnt auch Kommazahle
 6. `npm install` **Enter**  
    + Die Eingabeaufforderung kannst du wieder schließen wenn alles installiert ist.  
 7. Doppelklick auf start.bat  
+
+
+# ROADMAP
+## Auf dem Plan
++ Animationen beim Einblenden eines Eintrags  
++ Neuer Tab *Spielverlauf*, zum nachvollziehen der Punktevergabe  
++ Hotkeys - Eventuell mit einem Tab für Einstellungen für die Punktevergabe und allgemeinen Regeln  
++ Button für Vollbild im Spielerfenster  
++ Runden in der Moderationsansicht gruppieren  
++ Button um eine Random noch nicht gespielte Runde zu starten  
++ Import/Export von Runden/Kategorien  
++ Sortierung für die Rundenübersicht  
++ Teamreihenfolge anpassbar machen  
++ Sicherheits popups ändern  
++ Antwortzähler im Spielerfenster einfügen  
++ Schnellfilter für Runden im Moidertationsfenster  
++ Mehrere Spielstände speichern und laden  
+
+## Keine Ahnung obs nützlich ist oder überhaupt kommt
++ Online Version
