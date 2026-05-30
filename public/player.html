@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Listen-Legenden - Spieler</title>
+
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="player-body">
+  <main class="player-screen">
+    <section class="show-title">
+      <div class="show-name">Listen-Legenden</div>
+      <div id="roundTitle" class="round-title">Warte auf die nächste Runde...</div>
+      <div id="roundSubtitle" class="round-subtitle"></div>
+    </section>
+
+    <section class="list-stage">
+      <div id="playerItems" class="player-items empty-state">
+        Noch keine Kategorie geladen.
+      </div>
+
+      <div id="playerTimer" class="player-timer">
+        <div class="timer-ring">
+          <div id="timerText" class="timer-text">05:00</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="teamBar" class="team-bar">
+      <div class="team-placeholder">Noch keine Teams angelegt.</div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/player.js"></script>
+</body>
+</html>

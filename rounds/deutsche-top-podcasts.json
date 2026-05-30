@@ -1,0 +1,48 @@
+{
+  "title": "Deutsche Top-Podcasts auf Spotify",
+  "subtitle": "Top 10, dings, lernen, aufrufe",
+  "source": "Spotify Charts, Stand Mai 2026",
+  "notes": "Monatliche Hörerzahlen sind geschätzt.",
+  "items": [
+    {
+      "text": "Gemischtes Hack",
+      "info": "ca. 4,8 Mio."
+    },
+    {
+      "text": "Kaulitz Hills",
+      "info": "ca. 1,9 Mio."
+    },
+    {
+      "text": "Mordlust",
+      "info": "ca. 1,6 Mio."
+    },
+    {
+      "text": "MORD AUF EX",
+      "info": "ca. 1,4 Mio."
+    },
+    {
+      "text": "Lanz + Precht",
+      "info": "ca. 1,2 Mio."
+    },
+    {
+      "text": "Baywatch Berlin",
+      "info": "ca. 1,1 Mio."
+    },
+    {
+      "text": "Fest und Flauschig",
+      "info": "ca. 1,0 Mio."
+    },
+    {
+      "text": "Hobbylos",
+      "info": "ca. 900k"
+    },
+    {
+      "text": "ungescriptet",
+      "info": "ca. 850k"
+    },
+    {
+      "text": "Hotel Matze",
+      "info": "ca. 800k"
+    }
+  ]
+}
