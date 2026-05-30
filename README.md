@@ -103,6 +103,7 @@ Links habt ihr noch die EInstellungen für den Timer. Ihr könnt auch Kommazahle
 + Schnellfilter für Runden im Moidertationsfenster  
 + Mehrere Spielstände speichern und laden
 + **Umstieg von Web-App auf Desktop-App**
++ **Einbindung mehrerer PietSmiet Spiele**
 
 ## Keine Ahnung obs nützlich ist oder überhaupt kommt
 + Online Version
