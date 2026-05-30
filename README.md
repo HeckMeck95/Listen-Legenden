@@ -12,7 +12,7 @@ Steuere alles nötige in der Moderationsansicht, während sich deine Freunde an 
 
 
 # NFO
-##Spieleransicht
+## Spieleransicht
 
 Aktuell hat diese Web-App keine Online Funktion und ich bin mir nicht sicher ob sie jemals eine haben wird.  
 Diese App ist eher dazu gedacht, sie über Discord zu streamen oder über OBS.Ninja/VDO.Ninja zu streamen.
