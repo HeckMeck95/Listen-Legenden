@@ -12,10 +12,19 @@ Steuere alles nötige in der Moderationsansicht, während sich deine Freunde an 
 
 
 # NFO
-## Spieleransicht
 
 Aktuell hat diese Web-App keine Online Funktion und ich bin mir nicht sicher ob sie jemals eine haben wird.  
 Diese App ist eher dazu gedacht, sie über Discord zu streamen oder über OBS.Ninja/VDO.Ninja zu streamen.
+
+Listen Legenden läuft Lokal auf eurem Rechner, ihr braucht kein Internet, abgesehen von der installation.  
+Es wird nichts online gespeichert, alles ist auf eurem Gerät.  
+Wenn ihr die *start.bat* Datei ausführt, öffnet sich eine Eingabeaufforderung, die muss offen bleiben!  
+Die App nutzt den Port 3000, wenn der bei euch belegt ist, startet die App nicht.  
+Die Runden bzw. Kategorien liegen als JSON Datei in /rounds.  
+Spielstände werden lokal im /data Ordner gespeichert. Sitzungsübergreifend bleiben also alle Teams, Punkte, Fehler etc bestehen, bis ihr oben rechts auf "Neues Spiel" klickt.  
+Aktuell gibt es keine Möglichkeit mehrere Spielstände gleichzeitig zu speichen oder zu laden. Wenn ihr das möchtet, macht ein manuelles Backup von der Datei.  
+
+## Spieleransicht
 
 Es gibt eine Spieleransicht auf der alle wichtigen Infos für die Spieler stehen:  
 Oben die Kategorie der Runde.  
