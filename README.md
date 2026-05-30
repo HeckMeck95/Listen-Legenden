@@ -67,7 +67,7 @@ Links habt ihr noch die EInstellungen für den Timer. Ihr könnt auch Kommazahle
 <img width="1902" height="1063" alt="grafik" src="https://github.com/user-attachments/assets/9db59d27-9852-4055-b21b-d7553fc136f9" />
 
 # INSTALLATION
-Installiert [Node.js](https://nodejs.org/en)
-Ladet den latest release von Listen Legenden runter
-Schmeißt den Ordner irgendwo hin
-Doppelklick auf start.bat
+Installiert [Node.js](https://nodejs.org/en)  
+Ladet den latest release von Listen Legenden runter  
+Schmeißt den Ordner irgendwo hin  
+Doppelklick auf start.bat  
