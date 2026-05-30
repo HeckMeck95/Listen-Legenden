@@ -72,6 +72,6 @@ Links habt ihr noch die EInstellungen für den Timer. Ihr könnt auch Kommazahle
 + Schmeiß den Ordner irgendwo hin  
 + Öffne den Ordner, klicke in die Adresszeile und schreibe "cmd"  
   _ Dadurch öffnet sich die Eingabeaufforderung direkt in dem Ordner
-+ `npm install` **Enter**
++ `npm install` **Enter**  
   _ Die EIngabeaufforderung kannst du wieder schließen wenn alles installiert ist.
 + Doppelklick auf start.bat  
