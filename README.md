@@ -101,7 +101,8 @@ Links habt ihr noch die EInstellungen für den Timer. Ihr könnt auch Kommazahle
 + Sicherheits popups ändern  
 + Antwortzähler im Spielerfenster einfügen  
 + Schnellfilter für Runden im Moidertationsfenster  
-+ Mehrere Spielstände speichern und laden  
++ Mehrere Spielstände speichern und laden
++ **Umstieg von Web-App auf Desktop-App**
 
 ## Keine Ahnung obs nützlich ist oder überhaupt kommt
 + Online Version
