@@ -76,11 +76,12 @@ Links habt ihr noch die EInstellungen für den Timer. Ihr könnt auch Kommazahle
 <img width="1902" height="1063" alt="grafik" src="https://github.com/user-attachments/assets/9db59d27-9852-4055-b21b-d7553fc136f9" />
 
 # INSTALLATION
-+ Installier [Node.js](https://nodejs.org/en)  
-+ Lade den latest release von Listen Legenden runter  
-+ Schmeiß den Ordner irgendwo hin  
-+ Öffne den Ordner, klicke in die Adresszeile und schreibe "cmd"  
-  _ Dadurch öffnet sich die Eingabeaufforderung direkt in dem Ordner
-+ `npm install` **Enter**  
-  _ Die EIngabeaufforderung kannst du wieder schließen wenn alles installiert ist.
-+ Doppelklick auf start.bat  
+1. Installier [Node.js](https://nodejs.org/en)  
+2. Lade den latest release von Listen Legenden runter  
+3. Schmeiß den Ordner irgendwo hin  
+4. **Für Leute die wenig Ahnung davon haben, doppelklick auf *install.bat* und macht dann mit Schritt 7 weiter**  
+5. Öffne den Ordner, klicke in die Adresszeile und schreibe "cmd"  
+   + Dadurch öffnet sich die Eingabeaufforderung direkt in dem Ordner  
+6. `npm install` **Enter**  
+   + Die Eingabeaufforderung kannst du wieder schließen wenn alles installiert ist.  
+7. Doppelklick auf start.bat  
