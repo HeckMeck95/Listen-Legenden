@@ -88,22 +88,21 @@ Links habt ihr noch die EInstellungen für den Timer. Ihr könnt auch Kommazahle
 
 
 # ROADMAP
-## Auf dem Plan
-+ Animationen beim Einblenden eines Eintrags  
-+ Neuer Tab *Spielverlauf*, zum nachvollziehen der Punktevergabe  
-+ Hotkeys - Eventuell mit einem Tab für Einstellungen für die Punktevergabe und allgemeinen Regeln  
-+ Button für Vollbild im Spielerfenster  
-+ Runden in der Moderationsansicht gruppieren  
-+ Button um eine Random noch nicht gespielte Runde zu starten  
+## Auf dem Plan / Nahe Zukunft  
 + Import/Export von Runden/Kategorien  
-+ Sortierung für die Rundenübersicht  
-+ Teamreihenfolge anpassbar machen  
-+ Sicherheits popups ändern  
-+ Antwortzähler im Spielerfenster einfügen  
-+ Schnellfilter für Runden im Moidertationsfenster  
-+ Mehrere Spielstände speichern und laden
-+ **Umstieg von Web-App auf Desktop-App**
-+ **Einbindung mehrerer PietSmiet Spiele**
++ Umstieg von Web-App auf Desktop-App  
++ Ändern der Spiele App in einen Launcher mit mehreren Spielshows  
++ Hinzufügen von Jeopardy  
++ Hinzufügen von Ordnungshüter  
++ Hinzufügen von Traitor Quiz  
++ Hinzufügen von Sloxicon Quiz  
 
-## Keine Ahnung obs nützlich ist oder überhaupt kommt
-+ Online Version
+## Etwas entfernte Zukunft
+***Dadurch das ich für diese Spielshows eine Online Funktion brauche, damit die Spieler mit der SHow interagieren können***  
+***(Chips setzen beim Poker, Buzzernutzung) wird sich das ganze wohl etwas weiter nach hinten verschieben***  
+  
++ Hinzufügen von Onlineunterstützung für Buzzer/Interaktive Spielshows  
++ Hinzufügen von Wie passt das zusammen?   
++ Hinzufügen von Quiz Poker
++ Hinzufügen von einfachem Buzzerraum
+
