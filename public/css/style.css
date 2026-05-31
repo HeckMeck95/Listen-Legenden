@@ -308,7 +308,6 @@ textarea {
   background: #111827;
   border-color: #4b5563;
 }
-}
 
 .round-card.played .round-card-title {
   text-decoration: line-through;
@@ -2093,4 +2092,299 @@ input[type="color"] {
 
 .active-team-quick-buttons button {
   padding: 7px 10px;
+}
+
+/* Spieleransicht: größere Darstellung im Vollbildmodus */
+
+.player-body.fullscreen-mode .player-screen {
+  padding: 18px 24px 14px;
+  gap: 12px;
+}
+
+.player-body.fullscreen-mode .round-title {
+  font-size: clamp(30px, 2.8vw, 46px);
+  line-height: 1.08;
+}
+
+.player-body.fullscreen-mode .player-items {
+  width: min(1700px, 97vw);
+  column-gap: 34px;
+}
+
+.player-body.fullscreen-mode .player-timer {
+  width: clamp(92px, 8vw, 140px);
+  height: clamp(92px, 8vw, 140px);
+}
+
+
+/* Top 1–10 im Vollbild */
+
+.player-body.fullscreen-mode .player-items.list-size-small {
+  grid-auto-rows: 64px;
+  row-gap: 18px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-small .player-item {
+  min-height: 64px;
+  height: 64px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-small .player-item-number {
+  width: 66px;
+  height: 54px;
+  min-height: 54px;
+  font-size: 27px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-small .player-item.left-column {
+  grid-template-columns: 1fr 66px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-small .player-item.right-column {
+  grid-template-columns: 66px 1fr;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-small .player-item-text {
+  font-size: clamp(25px, 2vw, 38px);
+  padding: 6px 16px;
+}
+
+
+/* Top 11–20 im Vollbild */
+
+.player-body.fullscreen-mode .player-items.list-size-medium {
+  grid-auto-rows: 48px;
+  row-gap: 12px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-medium .player-item {
+  min-height: 48px;
+  height: 48px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-medium .player-item-number {
+  width: 56px;
+  height: 40px;
+  min-height: 40px;
+  font-size: 22px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-medium .player-item.left-column {
+  grid-template-columns: 1fr 56px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-medium .player-item.right-column {
+  grid-template-columns: 56px 1fr;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-medium .player-item-text {
+  font-size: clamp(20px, 1.55vw, 29px);
+  padding: 4px 14px;
+}
+
+
+/* Top 21–30 im Vollbild */
+
+.player-body.fullscreen-mode .player-items.list-size-large {
+  grid-auto-rows: 39px;
+  row-gap: 8px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-large .player-item {
+  min-height: 39px;
+  height: 39px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-large .player-item-number {
+  width: 48px;
+  height: 34px;
+  min-height: 34px;
+  font-size: 18px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-large .player-item.left-column {
+  grid-template-columns: 1fr 48px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-large .player-item.right-column {
+  grid-template-columns: 48px 1fr;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-large .player-item-text {
+  font-size: clamp(16px, 1.25vw, 23px);
+  padding: 3px 11px;
+}
+
+
+/* Top 31–50+ im Vollbild */
+
+.player-body.fullscreen-mode .player-items.list-size-huge {
+  grid-auto-rows: 30px;
+  row-gap: 4px;
+  column-gap: 30px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item {
+  min-height: 30px;
+  height: 30px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item-number {
+  width: 40px;
+  height: 26px;
+  min-height: 26px;
+  font-size: 15px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item.left-column {
+  grid-template-columns: 1fr 40px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item.right-column {
+  grid-template-columns: 40px 1fr;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item-text {
+  font-size: clamp(14px, 1.05vw, 18px);
+  padding: 1px 8px;
+  line-height: 1.08;
+}
+
+/* Feintuning Fenstermodus: Top 21–30 etwas luftiger */
+
+.player-items.list-size-large {
+  grid-auto-rows: 38px;
+  row-gap: 7px;
+}
+
+.player-items.list-size-large .player-item {
+  min-height: 36px;
+  height: 36px;
+}
+
+.player-items.list-size-large .player-item-number {
+  width: 44px;
+  height: 32px;
+  min-height: 32px;
+  font-size: 17px;
+}
+
+.player-items.list-size-large .player-item.left-column {
+  grid-template-columns: 1fr 44px;
+}
+
+.player-items.list-size-large .player-item.right-column {
+  grid-template-columns: 44px 1fr;
+}
+
+.player-items.list-size-large .player-item-text {
+  font-size: clamp(15px, 1.16vw, 21px);
+  padding: 3px 11px;
+  line-height: 1.08;
+}
+
+/* Feintuning Fenstermodus: Top 11–20 deutlich luftiger */
+
+.player-items.list-size-medium {
+  grid-auto-rows: 48px;
+  row-gap: 14px;
+}
+
+.player-items.list-size-medium .player-item {
+  min-height: 44px;
+  height: 44px;
+}
+
+.player-items.list-size-medium .player-item-number {
+  width: 54px;
+  height: 38px;
+  min-height: 38px;
+  font-size: 21px;
+}
+
+.player-items.list-size-medium .player-item.left-column {
+  grid-template-columns: 1fr 54px;
+}
+
+.player-items.list-size-medium .player-item.right-column {
+  grid-template-columns: 54px 1fr;
+}
+
+.player-items.list-size-medium .player-item-text {
+  font-size: clamp(19px, 1.45vw, 27px);
+  padding: 4px 14px;
+  line-height: 1.08;
+}
+
+/* Feintuning Fenstermodus: Top 1–10 deutlich größer */
+
+.player-items.list-size-small {
+  grid-auto-rows: 62px;
+  row-gap: 18px;
+}
+
+.player-items.list-size-small .player-item {
+  min-height: 62px;
+  height: 62px;
+}
+
+.player-items.list-size-small .player-item-number {
+  width: 68px;
+  height: 52px;
+  min-height: 52px;
+  font-size: 27px;
+}
+
+.player-items.list-size-small .player-item.left-column {
+  grid-template-columns: 1fr 68px;
+}
+
+.player-items.list-size-small .player-item.right-column {
+  grid-template-columns: 68px 1fr;
+}
+
+.player-items.list-size-small .player-item-text {
+  font-size: clamp(26px, 2vw, 38px);
+  padding: 6px 18px;
+  line-height: 1.08;
+}
+
+/* Feintuning Vollbildmodus: Top 31–50 Mittelwert */
+
+.player-body.fullscreen-mode .player-items.list-size-huge,
+:fullscreen .player-items.list-size-huge {
+  grid-auto-rows: 28px;
+  row-gap: 5px;
+  column-gap: 31px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item,
+:fullscreen .player-items.list-size-huge .player-item {
+  min-height: 31px;
+  height: 31px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item-number,
+:fullscreen .player-items.list-size-huge .player-item-number {
+  width: 40px;
+  height: 27px;
+  min-height: 27px;
+  font-size: 15px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item.left-column,
+:fullscreen .player-items.list-size-huge .player-item.left-column {
+  grid-template-columns: 1fr 40px;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item.right-column,
+:fullscreen .player-items.list-size-huge .player-item.right-column {
+  grid-template-columns: 40px 1fr;
+}
+
+.player-body.fullscreen-mode .player-items.list-size-huge .player-item-text,
+:fullscreen .player-items.list-size-huge .player-item-text {
+  font-size: clamp(14px, 1.04vw, 18px);
+  padding: 1px 8px;
+  line-height: 1.08;
 }

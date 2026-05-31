@@ -110,7 +110,7 @@ function renderItems(items) {
   orderedItems.forEach((item, displayIndex) => {
 	const rowIndex = Math.floor(displayIndex / 2);
 	const isLeftColumn = displayIndex % 2 === 0;
-	const centerOffset = getCenterOffset(rowIndex, rowCount);
+  const centerOffset = getCenterOffset(rowIndex, rowCount, items.length);
 
 	const wasRevealedBefore = previousRevealState
       ? previousRevealState.get(item.number) === true
@@ -169,15 +169,110 @@ function clearListSizeClass() {
   );
 }
 
-function getCenterOffset(rowIndex, rowCount) {
+function getCenterOffset(rowIndex, rowCount, itemCount) {
   const centerRow = (rowCount - 1) / 2;
   const distanceFromCenter = Math.abs(rowIndex - centerRow);
-  const maxOffset = 50;
-  const fadeRows = Math.max(2.5, Math.min(8, rowCount * 0.38));
-  const rawStrength = Math.max(0, 1 - distanceFromCenter / fadeRows);
+  const isFullscreen = document.body.classList.contains("fullscreen-mode");
+
+  const offsetSettings = getCenterOffsetSettings(itemCount, isFullscreen);
+
+  const rawStrength = Math.max(0, 1 - distanceFromCenter / offsetSettings.fadeRows);
+
   const smoothStrength = rawStrength * rawStrength * (3 - 2 * rawStrength);
 
-  return Math.round(maxOffset * smoothStrength);
+  return Math.round(offsetSettings.maxOffset * smoothStrength);
+}
+
+function getCenterOffsetSettings(itemCount, isFullscreen) {
+  // Diese Werte steuern die Wölbung der Liste um den Timer.
+  //
+  // maxOffset = wie weit die mittleren Zeilen nach außen rücken
+  // fadeRows  = wie weich/früh die Wölbung beginnt
+
+  const settings = {
+    small: { //Liste 10 und weniger
+      window: {
+        maxOffset: 58,
+        fadeRowsMultiplier: 0.38,
+        minFadeRows: 2.5,
+        maxFadeRows: 8
+      },
+      fullscreen: {
+        maxOffset: 66,
+        fadeRowsMultiplier: 0.4,
+        minFadeRows: 2.5,
+        maxFadeRows: 8
+      }
+    },
+
+    medium: { //Liste 11-20
+      window: {
+        maxOffset: 56,
+        fadeRowsMultiplier: 0.4,
+        minFadeRows: 3,
+        maxFadeRows: 8
+      },
+      fullscreen: {
+        maxOffset: 64,
+        fadeRowsMultiplier: 0.42,
+        minFadeRows: 3.5,
+        maxFadeRows: 8
+      }
+    },
+
+    large: { //Liste 21-30
+      window: {
+        maxOffset: 56,
+        fadeRowsMultiplier: 0.42,
+        minFadeRows: 3.5,
+        maxFadeRows: 8
+      },
+      fullscreen: {
+        maxOffset: 70,
+        fadeRowsMultiplier: 0.48,
+        minFadeRows: 4,
+        maxFadeRows: 9
+      }
+    },
+
+    huge: { //Liste über 30
+      window: {
+        maxOffset: 46,
+        fadeRowsMultiplier: 0.38,
+        minFadeRows: 2.5,
+        maxFadeRows: 8
+      },
+      fullscreen: {
+        maxOffset: 68,
+        fadeRowsMultiplier: 0.45,
+        minFadeRows: 5,
+        maxFadeRows: 10
+      }
+    }
+  };
+
+  let sizeKey = "huge";
+
+  if (itemCount <= 10) {
+    sizeKey = "small";
+  } else if (itemCount <= 20) {
+    sizeKey = "medium";
+  } else if (itemCount <= 30) {
+    sizeKey = "large";
+  }
+
+  const modeKey = isFullscreen ? "fullscreen" : "window";
+  const selected = settings[sizeKey][modeKey];
+
+  const fadeRows = Math.max(
+    selected.minFadeRows,
+    Math.min(selected.maxFadeRows, Math.ceil(itemCount / 2) * selected.fadeRowsMultiplier)
+  );
+
+  return {
+    maxOffset: selected.maxOffset,
+    fadeRows
+  };
 }
 
 function renderTeams() {
@@ -264,11 +359,20 @@ function toggleFullscreen() {
 }
 
 function updateFullscreenButton() {
-  if (!fullscreenBtn) return;
+  const isFullscreen = Boolean(document.fullscreenElement);
 
-  fullscreenBtn.textContent = document.fullscreenElement
-    ? "Fenster"
-    : "Vollbild";
+  if (fullscreenBtn) {
+    fullscreenBtn.textContent = isFullscreen
+      ? "Fenster"
+      : "Vollbild";
+  }
+
+  document.body.classList.toggle("fullscreen-mode", isFullscreen);
+
+  // Liste im Vollbild neu Rendern
+  if (state && state.currentRound) {
+    renderRound();
+  }
 }
 
 function escapeHtml(value) {

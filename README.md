@@ -10,7 +10,6 @@ Eine Nachbildung von ***Wer bietet mehr?*** von [PietSmiet](https://www.youtube.
 
 Steuere alles nötige in der Moderationsansicht, während sich deine Freunde an der schönen Spieleransicht vergnügen!
 
-
 # :information_source:NFO
 
 Aktuell hat diese Web-App keine Online Funktion und ich bin mir nicht sicher ob sie jemals eine haben wird.  
@@ -37,9 +36,6 @@ Unten die Teams, Punkte, Fehler, Gebot und welches Team gerade aktiv die Runde s
 <img width="1920" height="1078" alt="grafik" src="https://github.com/user-attachments/assets/82f189dc-4b70-4091-9518-a5003c21d659" />
 <img width="1920" height="1078" alt="grafik" src="https://github.com/user-attachments/assets/8f90c01e-c184-410b-8f85-001b7b5e1fc1" />
 
-
-
-
 ## Moderatoransicht
 
 Dazu gibt es für den Moderator natürlich auch ein eigenes Fenster.  
@@ -59,7 +55,8 @@ den Punktestand manuell anpassen, das Gebot des Teams ändern und die Fehler not
 
 <img width="1920" height="1080" alt="grafik" src="https://github.com/user-attachments/assets/7f377fba-9bca-4e37-9805-0cfeb6034157" />
 
-### Runden 
+### Runden  
+
 Auf der Linken Seite könnt ihr aussuchen welche Runde bzw. welche Kategorie ihr spielen wollt.  
 Sobald ihr eine Kategorie ladet, werden alle Einträge in der Liste für die Spieler verdeckt, also keine Angst vor spoilern.  
 Ihr könnt hier auch nach euren Kategorien suchen. Gesucht wird nach Titel und Tags.  
@@ -128,8 +125,11 @@ Danach im Browser auf
 http://localhost:3000/moderator.html  
 http://localhost:3000/player.html  
 
-# :motorway: :world_map: ROADMAP :motorway: :world_map:
+#  :motorway: :world_map: ROADMAP :motorway: :world_map:
+
 ## Auf dem Plan / Nahe Zukunft  
+
++ Designanpassungen und Layoutänderungen
 + Import/Export von Runden/Kategorien  
 + Umstieg von Web-App auf Desktop-App  
 + Ändern der Spiele App in einen Launcher mit mehreren Spielshows  
@@ -139,10 +139,11 @@ http://localhost:3000/player.html
 + Hinzufügen von Sloxicon Quiz  
 
 ## Etwas entfernte Zukunft
+
 ***Dadurch das ich für diese Spielshows eine Online Funktion brauche, damit die Spieler mit der Show interagieren können***  
 ***(Chips setzen beim Poker, Buzzernutzung) wird sich das ganze wohl etwas weiter nach hinten verschieben***  
   
 + Hinzufügen von Onlineunterstützung für Buzzer/Interaktive Spielshows  
-+ Hinzufügen von Wie passt das zusammen?   
++ Hinzufügen von Wie passt das zusammen?  
 + Hinzufügen von Quiz Poker
 + Hinzufügen von einfachem Buzzerraum
