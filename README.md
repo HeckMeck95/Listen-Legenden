@@ -99,7 +99,7 @@ Danach im Browser auf
 http://localhost:3000/moderator.html  
 http://localhost:3000/player.html  
 
-# ROADMAP
+# :motorway: :world_map: ROADMAP :motorway: :world_map:
 ## Auf dem Plan / Nahe Zukunft  
 + Import/Export von Runden/Kategorien  
 + Umstieg von Web-App auf Desktop-App  
