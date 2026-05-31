@@ -12,12 +12,38 @@ const PORT = 3000;
 const ROUNDS_DIR = path.join(__dirname, "rounds");
 const DATA_DIR = path.join(__dirname, "data");
 const SAVE_FILE = path.join(DATA_DIR, "game-state.json");
+const SAVES_DIR = path.join(DATA_DIR, "saves");
+const FAVORITES_FILE = path.join(DATA_DIR, "favorites.json");
+const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 let nextTeamId = 1;
 let timerInterval = null;
+let favoriteRoundIds = [];
+
+const DEFAULT_SETTINGS = {
+  hotkeys: {
+    timerToggle: "Space",
+    timerReset: "KeyR",
+    hideAll: "KeyH",
+    revealAll: "",
+    finishWin: "KeyG",
+    finishLoss: "KeyV",
+	activeErrorPlus: "KeyF",
+  activeErrorMinus: "KeyD"
+  }
+};
+let appSettings = getDefaultSettings();
+
+const DEFAULT_TEAM_COLORS = [
+  "#2563eb", // Blau
+  "#16a34a", // Grün
+  "#ca8a04", // Gelb/Gold
+  "#ea580c", // Orange
+  "#dc2626"  // Rot
+];
 
 let gameState = {
   teams: [],
@@ -25,6 +51,8 @@ let gameState = {
   revealed: [],
   activeTeamId: null,
   playedRoundIds: [],
+  history: [],
+  answerCounter: null,
   timer: {
     duration: 300,
     remaining: 300,
@@ -102,18 +130,29 @@ function parseItemsText(itemsText) {
 }
 
 function getRoundsList() {
-  return getRoundFiles().map(filename => {
-    const round = readRoundFile(filename);
+  return getRoundFiles()
+    .map((filename, index) => {
+      const round = readRoundFile(filename);
 
-    return {
-		id: round.id,
-		filename: round.filename,
-		title: round.title,
-		subtitle: round.subtitle,
-		itemCount: round.items.length,
-		played: gameState.playedRoundIds.includes(round.id)
-};
-  });
+      return {
+        id: round.id,
+        filename: round.filename,
+        title: round.title,
+        subtitle: round.subtitle,
+        itemCount: round.items.length,
+        played: gameState.playedRoundIds.includes(round.id),
+        favorite: isRoundFavorite(round.id),
+        originalIndex: index
+      };
+    })
+    .sort((a, b) => {
+      if (a.favorite !== b.favorite) {
+        return a.favorite ? -1 : 1;
+      }
+
+      return a.originalIndex - b.originalIndex;
+    })
+    .map(({ originalIndex, ...round }) => round);
 }
 
 function slugify(value) {
@@ -154,23 +193,304 @@ function getRoundFilenameById(roundId) {
   }) || null;
 }
 
-function saveGameState() {
+function ensureDataDirectories() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR);
   }
 
-  const saveData = {
-  teams: gameState.teams,
-  activeTeamId: gameState.activeTeamId,
-  playedRoundIds: gameState.playedRoundIds,
-  currentRoundId: gameState.currentRound ? gameState.currentRound.id : null,
-  revealed: gameState.revealed,
-  timer: {
-    duration: gameState.timer.duration,
-    remaining: gameState.timer.remaining,
-    running: false
+  if (!fs.existsSync(SAVES_DIR)) {
+    fs.mkdirSync(SAVES_DIR);
   }
-};
+}
+
+function getDefaultSettings() {
+  return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+}
+
+function normalizeHotkeyCode(value) {
+  const text = String(value || "").trim();
+
+  if (!text) {
+    return "";
+  }
+
+  return text.replace(/[^a-zA-Z0-9]/g, "").slice(0, 40);
+}
+
+function sanitizeHotkeys(hotkeys) {
+  const defaults = DEFAULT_SETTINGS.hotkeys;
+  const cleanHotkeys = {};
+
+  Object.keys(defaults).forEach(actionId => {
+    if (hotkeys && Object.prototype.hasOwnProperty.call(hotkeys, actionId)) {
+      cleanHotkeys[actionId] = normalizeHotkeyCode(hotkeys[actionId]);
+    } else {
+      cleanHotkeys[actionId] = defaults[actionId];
+    }
+  });
+
+  return cleanHotkeys;
+}
+
+function loadSettings() {
+  ensureDataDirectories();
+
+  appSettings = getDefaultSettings();
+
+  if (!fs.existsSync(SETTINGS_FILE)) {
+    saveSettings();
+    return;
+  }
+
+  try {
+    const rawData = fs.readFileSync(SETTINGS_FILE, "utf8");
+    const data = JSON.parse(rawData);
+
+    appSettings = {
+      ...getDefaultSettings(),
+      ...data,
+      hotkeys: sanitizeHotkeys(data.hotkeys || {})
+    };
+  } catch (error) {
+    console.error("Einstellungen konnten nicht geladen werden:", error);
+    appSettings = getDefaultSettings();
+  }
+}
+
+function saveSettings() {
+  ensureDataDirectories();
+
+  fs.writeFileSync(
+    SETTINGS_FILE,
+    JSON.stringify(appSettings, null, 2),
+    "utf8"
+  );
+}
+
+function loadFavorites() {
+  ensureDataDirectories();
+
+  if (!fs.existsSync(FAVORITES_FILE)) {
+    favoriteRoundIds = [];
+    return;
+  }
+
+  try {
+    const rawData = fs.readFileSync(FAVORITES_FILE, "utf8");
+    const data = JSON.parse(rawData);
+
+    favoriteRoundIds = Array.isArray(data.favoriteRoundIds)
+      ? data.favoriteRoundIds
+      : [];
+  } catch (error) {
+    console.error("Favoriten konnten nicht geladen werden:", error);
+    favoriteRoundIds = [];
+  }
+}
+
+function saveFavorites() {
+  ensureDataDirectories();
+
+  fs.writeFileSync(
+    FAVORITES_FILE,
+    JSON.stringify({ favoriteRoundIds }, null, 2),
+    "utf8"
+  );
+}
+
+function isRoundFavorite(roundId) {
+  return favoriteRoundIds.includes(roundId);
+}
+
+function toggleRoundFavorite(roundId) {
+  if (isRoundFavorite(roundId)) {
+    favoriteRoundIds = favoriteRoundIds.filter(id => id !== roundId);
+  } else {
+    favoriteRoundIds.push(roundId);
+  }
+
+  saveFavorites();
+}
+
+function removeRoundFromFavorites(roundId) {
+  favoriteRoundIds = favoriteRoundIds.filter(id => id !== roundId);
+  saveFavorites();
+}
+
+function buildGameSaveData(saveName = "") {
+  return {
+    saveName,
+    savedAt: new Date().toISOString(),
+    teams: gameState.teams,
+    activeTeamId: gameState.activeTeamId,
+    playedRoundIds: gameState.playedRoundIds,
+    history: gameState.history,
+    answerCounter: gameState.answerCounter,
+    currentRoundId: gameState.currentRound ? gameState.currentRound.id : null,
+    revealed: gameState.revealed,
+    timer: {
+      duration: gameState.timer.duration,
+      remaining: gameState.timer.remaining,
+      running: false
+    },
+    summary: {
+      currentRoundTitle: gameState.currentRound ? gameState.currentRound.title : "",
+      teamCount: gameState.teams.length,
+      teams: gameState.teams.map(team => ({
+        id: team.id,
+        name: team.name,
+        score: team.score,
+        color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
+      })),
+      historyCount: Array.isArray(gameState.history) ? gameState.history.length : 0,
+      playedRoundCount: Array.isArray(gameState.playedRoundIds) ? gameState.playedRoundIds.length : 0
+    }
+  };
+}
+
+function applyGameSaveData(saveData) {
+  gameState.teams = Array.isArray(saveData.teams) ? saveData.teams : [];
+
+  gameState.teams = gameState.teams.map(team => ({
+    ...team,
+    color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
+  }));
+
+  gameState.activeTeamId = saveData.activeTeamId || null;
+
+  if (!gameState.teams.some(team => team.id === gameState.activeTeamId)) {
+    gameState.activeTeamId = null;
+  }
+
+  sortTeamsById();
+
+  gameState.playedRoundIds = Array.isArray(saveData.playedRoundIds)
+    ? saveData.playedRoundIds
+    : [];
+
+  gameState.history = Array.isArray(saveData.history)
+    ? saveData.history
+    : [];
+
+  gameState.answerCounter = saveData.answerCounter || null;
+
+  if (saveData.timer) {
+    gameState.timer = {
+      duration: saveData.timer.duration || 300,
+      remaining: saveData.timer.remaining || saveData.timer.duration || 300,
+      running: false
+    };
+  }
+
+  if (saveData.currentRoundId) {
+    try {
+      const round = readRoundFile(`${saveData.currentRoundId}.json`);
+      gameState.currentRound = round;
+
+      if (
+        Array.isArray(saveData.revealed) &&
+        saveData.revealed.length === round.items.length
+      ) {
+        gameState.revealed = saveData.revealed;
+      } else {
+        gameState.revealed = round.items.map(() => false);
+      }
+    } catch {
+      gameState.currentRound = null;
+      gameState.revealed = [];
+    }
+  } else {
+    gameState.currentRound = null;
+    gameState.revealed = [];
+  }
+
+  const highestTeamId = gameState.teams.reduce((highest, team) => {
+    return Math.max(highest, Number(team.id) || 0);
+  }, 0);
+
+  nextTeamId = highestTeamId + 1;
+}
+
+function makeUniqueSaveFilename(name) {
+  ensureDataDirectories();
+
+  const slug = slugify(name || "spielstand");
+  let filename = `${slug}.json`;
+  let counter = 2;
+
+  while (fs.existsSync(path.join(SAVES_DIR, filename))) {
+    filename = `${slug}-${counter}.json`;
+    counter += 1;
+  }
+
+  return filename;
+}
+
+function getSaveGameFiles() {
+  ensureDataDirectories();
+
+  return fs
+    .readdirSync(SAVES_DIR)
+    .filter(file => file.endsWith(".json"));
+}
+
+function getSaveFilenameById(saveId) {
+  const id = String(saveId || "");
+
+  return getSaveGameFiles().find(filename => {
+    return filename.replace(/\.json$/, "") === id;
+  }) || null;
+}
+
+function readSaveGameSummary(filename) {
+  const filePath = path.join(SAVES_DIR, filename);
+  const rawData = fs.readFileSync(filePath, "utf8");
+  const data = JSON.parse(rawData);
+
+  const summary = data.summary || {};
+
+  return {
+    id: filename.replace(".json", ""),
+    filename,
+    name: data.saveName || filename.replace(".json", ""),
+    createdAt: data.createdAt || data.savedAt || "",
+    savedAt: data.savedAt || data.createdAt || "",
+    currentRoundTitle: summary.currentRoundTitle || data.currentRoundId || "Keine Runde geladen",
+    teamCount: summary.teamCount ?? (Array.isArray(data.teams) ? data.teams.length : 0),
+    teams: Array.isArray(summary.teams)
+      ? summary.teams
+      : Array.isArray(data.teams)
+        ? data.teams.map(team => ({
+            id: team.id,
+            name: team.name,
+            score: team.score,
+            color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
+          }))
+        : [],
+    historyCount: summary.historyCount ?? (Array.isArray(data.history) ? data.history.length : 0),
+    playedRoundCount: summary.playedRoundCount ?? (Array.isArray(data.playedRoundIds) ? data.playedRoundIds.length : 0)
+  };
+}
+
+function getSaveGamesList() {
+  return getSaveGameFiles()
+    .map(filename => {
+      try {
+        return readSaveGameSummary(filename);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      return new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
+    });
+}
+
+function saveGameState() {
+  ensureDataDirectories();
+
+  const saveData = buildGameSaveData("Autosave");
 
   fs.writeFileSync(SAVE_FILE, JSON.stringify(saveData, null, 2), "utf8");
 }
@@ -185,11 +505,21 @@ function loadGameState() {
     const saveData = JSON.parse(rawData);
 
     gameState.teams = Array.isArray(saveData.teams) ? saveData.teams : [];
-    gameState.activeTeamId = saveData.activeTeamId || null;
+
+	gameState.teams = gameState.teams.map(team => ({
+	  ...team,
+	  color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
+	}));
+
+	gameState.activeTeamId = saveData.activeTeamId || null;
 	sortTeamsById();
 	gameState.playedRoundIds = Array.isArray(saveData.playedRoundIds)
 		? saveData.playedRoundIds
 		: [];
+	gameState.history = Array.isArray(saveData.history)
+		? saveData.history
+		: [];
+	gameState.answerCounter = saveData.answerCounter || null;
 
     if (saveData.timer) {
       gameState.timer = {
@@ -236,7 +566,8 @@ function getPublicTeams() {
     name: team.name,
     score: team.score,
     bid: team.bid,
-    errors: team.errors
+    errors: team.errors,
+    color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
   }));
 }
 
@@ -244,10 +575,11 @@ function getPlayerState() {
   const round = gameState.currentRound;
 
   return {
-    teams: getPublicTeams(),
-    activeTeamId: gameState.activeTeamId,
-    timer: gameState.timer,
-    currentRound: round
+	teams: getPublicTeams(),
+	activeTeamId: gameState.activeTeamId,
+	timer: gameState.timer,
+	answerCounter: gameState.answerCounter,
+	currentRound: round
       ? {
           id: round.id,
           title: round.title,
@@ -267,7 +599,9 @@ function getPlayerState() {
 function getModeratorState() {
   return {
     ...gameState,
-    rounds: getRoundsList()
+    rounds: getRoundsList(),
+    saves: getSaveGamesList(),
+	settings: appSettings
   };
 }
 
@@ -288,6 +622,8 @@ function resetGameState() {
   revealed: [],
   activeTeamId: null,
   playedRoundIds: [],
+  history: [],
+  answerCounter: null,
   timer: {
     duration: 300,
     remaining: 300,
@@ -306,6 +642,21 @@ function resetGameState() {
 
 function findTeam(teamId) {
   return gameState.teams.find(team => team.id === teamId);
+}
+
+function getDefaultTeamColor(teamId) {
+  const index = Math.max(0, Number(teamId) - 1) % DEFAULT_TEAM_COLORS.length;
+  return DEFAULT_TEAM_COLORS[index];
+}
+
+function normalizeTeamColor(color, fallbackColor) {
+  const text = String(color || "").trim();
+
+  if (/^#[0-9a-fA-F]{6}$/.test(text)) {
+    return text;
+  }
+
+  return fallbackColor || DEFAULT_TEAM_COLORS[0];
 }
 
 function getNextAvailableTeamId() {
@@ -358,6 +709,92 @@ function markCurrentRoundAsPlayed() {
   }
 }
 
+function getValidBidFromTeam(team) {
+  if (!team) {
+    return null;
+  }
+
+  const bid = Number(team.bid);
+
+  if (!Number.isFinite(bid) || bid <= 0) {
+    return null;
+  }
+
+  return Math.floor(bid);
+}
+
+function startAnswerCounterForTeam(team) {
+  if (!team) {
+    gameState.answerCounter = null;
+    return;
+  }
+
+  gameState.answerCounter = {
+    visible: true,
+    locked: false,
+    teamId: team.id,
+    teamName: team.name,
+    target: getValidBidFromTeam(team),
+    count: 0,
+    countedItemIndexes: []
+  };
+}
+
+function updateAnswerCounterTarget(team) {
+  if (!gameState.answerCounter) return;
+  if (gameState.answerCounter.locked) return;
+  if (!team || gameState.answerCounter.teamId !== team.id) return;
+
+  gameState.answerCounter.teamName = team.name;
+  gameState.answerCounter.target = getValidBidFromTeam(team);
+}
+
+function countAnswerReveal(index) {
+  if (!gameState.answerCounter) return;
+  if (gameState.answerCounter.locked) return;
+  if (!gameState.answerCounter.visible) return;
+
+  if (!Array.isArray(gameState.answerCounter.countedItemIndexes)) {
+    gameState.answerCounter.countedItemIndexes = [];
+  }
+
+  if (gameState.answerCounter.countedItemIndexes.includes(index)) {
+    return;
+  }
+
+  gameState.answerCounter.countedItemIndexes.push(index);
+  gameState.answerCounter.count = gameState.answerCounter.countedItemIndexes.length;
+}
+
+function uncountAnswerReveal(index) {
+  if (!gameState.answerCounter) return;
+  if (gameState.answerCounter.locked) return;
+  if (!gameState.answerCounter.visible) return;
+
+  if (!Array.isArray(gameState.answerCounter.countedItemIndexes)) {
+    gameState.answerCounter.countedItemIndexes = [];
+  }
+
+  gameState.answerCounter.countedItemIndexes =
+    gameState.answerCounter.countedItemIndexes.filter(itemIndex => itemIndex !== index);
+
+  gameState.answerCounter.count = gameState.answerCounter.countedItemIndexes.length;
+}
+
+function lockAnswerCounter() {
+  if (!gameState.answerCounter) return;
+
+  gameState.answerCounter.locked = true;
+}
+
+function clearAnswerCounterIfUnlocked() {
+  if (!gameState.answerCounter) return;
+
+  if (!gameState.answerCounter.locked) {
+    gameState.answerCounter = null;
+  }
+}
+
 function resetRoundTeamState() {
   gameState.teams = gameState.teams.map(team => ({
     ...team,
@@ -367,6 +804,28 @@ function resetRoundTeamState() {
 
   gameState.activeTeamId = null;
   gameState.timer.running = false;
+
+  lockAnswerCounter();
+}
+
+function addHistoryEntry(entry) {
+  const fullEntry = {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    createdAt: new Date().toISOString(),
+    ...entry,
+    scoresAfter: gameState.teams.map(team => ({
+	  teamId: team.id,
+	  teamName: team.name,
+	  teamColor: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
+	  score: team.score
+	}))
+  };
+
+  gameState.history.unshift(fullEntry);
+
+  if (gameState.history.length > 200) {
+    gameState.history = gameState.history.slice(0, 200);
+  }
 }
 
 function parseScoreInput(currentScore, input) {
@@ -510,6 +969,132 @@ io.on("connection", (socket) => {
     }
   });
   
+socket.on("settings:updateHotkeys", (hotkeys) => {
+  appSettings.hotkeys = sanitizeHotkeys(hotkeys || {});
+  saveSettings();
+  broadcastState();
+});
+
+socket.on("settings:resetHotkeys", () => {
+  appSettings.hotkeys = getDefaultSettings().hotkeys;
+  saveSettings();
+  broadcastState();
+});
+  
+socket.on("saves:refresh", () => {
+  broadcastState();
+});
+
+socket.on("save:create", ({ name }) => {
+  try {
+    const cleanName = String(name || "").trim();
+
+    if (!cleanName) {
+      socket.emit("save:createResult", {
+        ok: false,
+        error: "Der Spielstand braucht einen Namen."
+      });
+      return;
+    }
+
+    ensureDataDirectories();
+
+    const filename = makeUniqueSaveFilename(cleanName);
+    const now = new Date().toISOString();
+
+    const saveData = {
+      ...buildGameSaveData(cleanName),
+      createdAt: now,
+      savedAt: now
+    };
+
+    fs.writeFileSync(
+      path.join(SAVES_DIR, filename),
+      JSON.stringify(saveData, null, 2),
+      "utf8"
+    );
+
+    socket.emit("save:createResult", {
+      ok: true,
+      filename,
+      name: cleanName
+    });
+
+    broadcastState();
+  } catch (error) {
+    console.error("Spielstand konnte nicht gespeichert werden:", error);
+
+    socket.emit("save:createResult", {
+      ok: false,
+      error: "Der Spielstand konnte nicht gespeichert werden."
+    });
+  }
+});
+
+socket.on("save:load", (saveId) => {
+  try {
+    const filename = getSaveFilenameById(saveId);
+
+    if (!filename) {
+      socket.emit("save:loadResult", {
+        ok: false,
+        error: "Spielstand wurde nicht gefunden."
+      });
+      return;
+    }
+
+    const rawData = fs.readFileSync(path.join(SAVES_DIR, filename), "utf8");
+    const saveData = JSON.parse(rawData);
+
+    applyGameSaveData(saveData);
+    saveGameState();
+
+    socket.emit("save:loadResult", {
+      ok: true,
+      name: saveData.saveName || filename
+    });
+
+    broadcastState();
+  } catch (error) {
+    console.error("Spielstand konnte nicht geladen werden:", error);
+
+    socket.emit("save:loadResult", {
+      ok: false,
+      error: "Der Spielstand konnte nicht geladen werden."
+    });
+  }
+});
+
+socket.on("save:delete", (saveId) => {
+  try {
+    const filename = getSaveFilenameById(saveId);
+
+    if (!filename) {
+      socket.emit("save:deleteResult", {
+        ok: false,
+        error: "Spielstand wurde nicht gefunden."
+      });
+      return;
+    }
+
+    fs.unlinkSync(path.join(SAVES_DIR, filename));
+
+    socket.emit("save:deleteResult", {
+      ok: true,
+      filename
+    });
+
+    broadcastState();
+  } catch (error) {
+    console.error("Spielstand konnte nicht gelöscht werden:", error);
+
+    socket.emit("save:deleteResult", {
+      ok: false,
+      error: "Der Spielstand konnte nicht gelöscht werden."
+    });
+  }
+});
+  
 socket.on("round:duplicate", (roundId) => {
   try {
     const sourceFilename = getRoundFilenameById(roundId);
@@ -556,6 +1141,19 @@ socket.on("round:duplicate", (roundId) => {
       ok: false,
       error: "Die Runde konnte nicht dupliziert werden."
     });
+  }
+});
+
+socket.on("round:toggleFavorite", (roundId) => {
+  try {
+    const filename = getRoundFilenameById(roundId);
+
+    if (!filename) return;
+
+    toggleRoundFavorite(roundId);
+    broadcastState();
+  } catch (error) {
+    console.error("Favorit konnte nicht geändert werden:", error);
   }
 });
 
@@ -690,12 +1288,15 @@ socket.on("round:delete", (roundId) => {
     }
 
     fs.unlinkSync(path.join(ROUNDS_DIR, filename));
+	
 	gameState.playedRoundIds = gameState.playedRoundIds.filter(id => id !== roundId);
+	removeRoundFromFavorites(roundId);
 
     if (gameState.currentRound && gameState.currentRound.id === roundId) {
       gameState.currentRound = null;
       gameState.revealed = [];
       gameState.activeTeamId = null;
+	  gameState.answerCounter = null;
 
       gameState.teams = gameState.teams.map(team => ({
         ...team,
@@ -734,6 +1335,7 @@ socket.on("round:delete", (roundId) => {
       }));
 
       gameState.activeTeamId = null;
+	  gameState.answerCounter = null;
 
       persistAndBroadcast();
     } catch (error) {
@@ -746,34 +1348,64 @@ socket.on("round:delete", (roundId) => {
     if (!Number.isInteger(index)) return;
     if (index < 0 || index >= gameState.currentRound.items.length) return;
 
-    gameState.revealed[index] = !gameState.revealed[index];
-    persistAndBroadcast();
+    const wasRevealed = gameState.revealed[index] === true;
+
+	gameState.revealed[index] = !wasRevealed;
+
+	if (!wasRevealed && gameState.revealed[index]) {
+		countAnswerReveal(index);
+	}
+
+	if (wasRevealed && !gameState.revealed[index]) {
+		uncountAnswerReveal(index);
+	}
+
+	persistAndBroadcast();
   });
 
   socket.on("round:hideAll", () => {
     if (!gameState.currentRound) return;
 
-    gameState.revealed = gameState.currentRound.items.map(() => false);
-    persistAndBroadcast();
+    const previousRevealed = gameState.revealed.map(value => value === true);
+
+	gameState.revealed = gameState.currentRound.items.map(() => false);
+
+	previousRevealed.forEach((wasRevealed, index) => {
+	if (wasRevealed) {
+		uncountAnswerReveal(index);
+	}
+	});
+
+	persistAndBroadcast();
   });
 
   socket.on("round:revealAll", () => {
     if (!gameState.currentRound) return;
 
-    gameState.revealed = gameState.currentRound.items.map(() => true);
-    persistAndBroadcast();
+    const previousRevealed = gameState.revealed.map(value => value === true);
+
+	gameState.revealed = gameState.currentRound.items.map(() => true);
+
+	previousRevealed.forEach((wasRevealed, index) => {
+		if (!wasRevealed) {
+			countAnswerReveal(index);
+		}
+	});
+
+	persistAndBroadcast();
   });
 
   socket.on("team:add", () => {
 	const teamId = getNextAvailableTeamId();
 	
 	const team = {
-      id: teamId,
-      name: `Team ${teamId}`,
-      players: "",
-      score: 0,
-      bid: "",
-      errors: 0
+	  id: teamId,
+	  name: `Team ${teamId}`,
+	  players: "",
+	  color: getDefaultTeamColor(teamId),
+	  score: 0,
+	  bid: "",
+	  errors: 0
 	};
 
   gameState.teams.push(team);
@@ -782,26 +1414,38 @@ socket.on("round:delete", (roundId) => {
   persistAndBroadcast();
   });
 
-  socket.on("team:update", ({ teamId, name, players }) => {
+  socket.on("team:update", ({ teamId, name, players, color }) => {
     const team = findTeam(teamId);
     if (!team) return;
 
     if (typeof name === "string") {
-      team.name = name.trim() || "Unbenanntes Team";
-    }
+	  team.name = name.trim() || "Unbenanntes Team";
+	}
 
-    if (typeof players === "string") {
+	if (typeof players === "string") {
       team.players = players;
-    }
+	}
 
-    persistAndBroadcast();
+	if (typeof color === "string") {
+      team.color = normalizeTeamColor(color, team.color || getDefaultTeamColor(team.id));
+	}
+
+	persistAndBroadcast();
   });
 
   socket.on("team:remove", (teamId) => {
 	gameState.teams = gameState.teams.filter(team => team.id !== teamId);
 
 	if (gameState.activeTeamId === teamId) {
-      gameState.activeTeamId = null;
+		gameState.activeTeamId = null;
+		}
+
+	if (
+		gameState.answerCounter &&
+		gameState.answerCounter.teamId === teamId &&
+		!gameState.answerCounter.locked
+	) {
+		gameState.answerCounter = null;
 	}
 
 	sortTeamsById();
@@ -829,6 +1473,7 @@ socket.on("round:delete", (roundId) => {
       team.bid = parseInt(text, 10);
     }
 
+	updateAnswerCounterTarget(team);
     persistAndBroadcast();
   });
 
@@ -841,22 +1486,46 @@ socket.on("round:delete", (roundId) => {
 
     persistAndBroadcast();
   });
+  
+  socket.on("activeTeam:errorDelta", (delta) => {
+	const activeTeam = getActiveTeam();
+
+	if (!activeTeam) {
+		return;
+	}
+
+	const change = Number(delta);
+
+	if (!Number.isFinite(change)) {
+		return;
+	}
+
+	const currentErrors = parseInt(activeTeam.errors, 10) || 0;
+	const nextErrors = Math.max(0, Math.min(3, currentErrors + change));
+
+	activeTeam.errors = nextErrors;
+
+	persistAndBroadcast();
+	});
 
   socket.on("team:setActive", (teamId) => {
-    const team = findTeam(teamId);
+	const team = findTeam(teamId);
 
-    if (!team) {
-      gameState.activeTeamId = null;
-    } else {
-      gameState.activeTeamId = teamId;
-    }
+	if (!team) {
+		gameState.activeTeamId = null;
+		gameState.answerCounter = null;
+	} else {
+		gameState.activeTeamId = teamId;
+		startAnswerCounterForTeam(team);
+	}
 
-    persistAndBroadcast();
-  });
+	persistAndBroadcast();
+	});
 
   socket.on("team:clearActive", () => {
-    gameState.activeTeamId = null;
-    persistAndBroadcast();
+	gameState.activeTeamId = null;
+	clearAnswerCounterIfUnlocked();
+	persistAndBroadcast();
   });
 
   socket.on("round:finishWin", () => {
@@ -890,11 +1559,28 @@ socket.on("round:delete", (roundId) => {
 
     activeTeam.score += bid;
 
-    const teamName = activeTeam.name;
-    const roundTitle = gameState.currentRound.title;
+	const teamName = activeTeam.name;
+	const roundTitle = gameState.currentRound.title;
 
-    markCurrentRoundAsPlayed();
-    resetRoundTeamState();
+	addHistoryEntry({
+	  type: "win",
+	  roundId: gameState.currentRound.id,
+	  roundTitle,
+	  activeTeamId: activeTeam.id,
+	  activeTeamName: teamName,
+	  bid,
+	  awardedPoints: [
+		{
+		  teamId: activeTeam.id,
+		  teamName,
+		  teamColor: normalizeTeamColor(activeTeam.color, getDefaultTeamColor(activeTeam.id)),
+		  points: bid
+		}
+	  ]
+	});
+
+	markCurrentRoundAsPlayed();
+	resetRoundTeamState();
 
     persistAndBroadcast();
 
@@ -954,15 +1640,30 @@ socket.on("round:delete", (roundId) => {
     const lossPoints = Math.floor(bid / 2);
 
     otherTeams.forEach(team => {
-      team.score += lossPoints;
-    });
+	  team.score += lossPoints;
+	});
 
-    const activeTeamName = activeTeam.name;
-    const receiverNames = otherTeams.map(team => team.name).join(", ");
-    const roundTitle = gameState.currentRound.title;
+	const activeTeamName = activeTeam.name;
+	const receiverNames = otherTeams.map(team => team.name).join(", ");
+	const roundTitle = gameState.currentRound.title;
 
-    markCurrentRoundAsPlayed();
-    resetRoundTeamState();
+	addHistoryEntry({
+	  type: "loss",
+	  roundId: gameState.currentRound.id,
+	  roundTitle,
+	  activeTeamId: activeTeam.id,
+	  activeTeamName,
+	  bid,
+	  awardedPoints: otherTeams.map(team => ({
+		teamId: team.id,
+		teamName: team.name,
+		teamColor: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
+		points: lossPoints
+	  }))
+	});
+
+	markCurrentRoundAsPlayed();
+	resetRoundTeamState();
 
     persistAndBroadcast();
 
@@ -979,6 +1680,11 @@ socket.on("round:delete", (roundId) => {
     });
   }
 });
+
+  socket.on("history:clear", () => {
+	gameState.history = [];
+	persistAndBroadcast();
+  });
 
   socket.on("timer:setDuration", (minutes) => {
     const parsedMinutes = Number(minutes);
@@ -1024,6 +1730,8 @@ socket.on("round:delete", (roundId) => {
   });
 });
 
+loadSettings();
+loadFavorites();
 loadGameState();
 startTimerInterval();
 

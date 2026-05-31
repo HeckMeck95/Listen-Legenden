@@ -22,10 +22,13 @@
   </header>
 
   <nav class="moderator-tabs">
-    <button class="tab-button" data-tab-target="dashboard">Dashboard</button>
-    <button class="tab-button" data-tab-target="teams">Teams</button>
-    <button class="tab-button" data-tab-target="rounds">Runden</button>
-    <button class="tab-button" data-tab-target="current">Aktuelle Runde</button>
+	<button class="tab-button" data-tab-target="dashboard">Dashboard</button>
+	<button class="tab-button" data-tab-target="teams">Teams</button>
+	<button class="tab-button" data-tab-target="rounds">Runden</button>
+	<button class="tab-button" data-tab-target="current">Aktuelle Runde</button>
+	<button class="tab-button" data-tab-target="saves">Spielstände</button>
+	<button class="tab-button" data-tab-target="history">Verlauf</button>
+	<button class="tab-button" data-tab-target="settings">Einstellungen</button>
   </nav>
 
   <main class="moderator-tab-content">
@@ -82,18 +85,61 @@
       <div class="rounds-tab-layout">
         <section class="panel">
           <div class="panel-title-row">
-            <div>
-              <h2>Runden</h2>
-              <p class="hint">Suchen, laden, duplizieren oder markieren.</p>
-            </div>
+			<div>
+				<h2>Runden</h2>
+				<p class="hint">Suchen, laden, duplizieren oder markieren.</p>
+			</div>
 
-            <button id="refreshRoundsBtn" class="secondary">Aktualisieren</button>
-          </div>
+			<div class="button-row">
+				<button id="randomOpenRoundBtn">Zufällige offene Runde</button>
+				<button id="refreshRoundsBtn" class="secondary">Aktualisieren</button>
+			</div>
+		</div>
 
           <div class="round-search">
             <input id="roundSearchInput" type="text" placeholder="Runden suchen..." />
             <button id="clearRoundSearchBtn" class="secondary" title="Suche löschen">×</button>
           </div>
+		  
+		  <div class="round-filter-dropdown">
+			<button id="roundFilterToggleBtn" class="round-filter-toggle" type="button">
+				<span id="roundFilterToggleText">Filter: Alle</span>
+				<span id="roundFilterArrow" class="round-filter-arrow">▼</span>
+			</button>
+
+		<div id="roundFilterMenu" class="round-filter-menu">
+			<div class="round-filter-group">
+				<div class="round-filter-group-title">Status</div>
+
+					<div class="round-filter-buttons">
+						<button class="round-filter-option active" data-filter-type="status" data-filter-value="all">Alle</button>
+						<button class="round-filter-option" data-filter-type="status" data-filter-value="open">Offen</button>
+						<button class="round-filter-option" data-filter-type="status" data-filter-value="played">Gespielt</button>
+					</div>
+				</div>
+
+			<div class="round-filter-group">
+				<div class="round-filter-group-title">Listengröße</div>
+
+					<div class="round-filter-buttons">
+						<button class="round-filter-option active" data-filter-type="size" data-filter-value="all">Alle Größen</button>
+						<button class="round-filter-option" data-filter-type="size" data-filter-value="exact10">Top 10</button>
+						<button class="round-filter-option" data-filter-type="size" data-filter-value="exact20">Top 20</button>
+						<button class="round-filter-option" data-filter-type="size" data-filter-value="exact30">Top 30</button>
+						<button class="round-filter-option" data-filter-type="size" data-filter-value="exact50">Top 50</button>
+						<button class="round-filter-option" data-filter-type="size" data-filter-value="upTo20">Bis 20</button>
+						<button class="round-filter-option" data-filter-type="size" data-filter-value="range20to30">20–30</button>
+						<button class="round-filter-option" data-filter-type="size" data-filter-value="range31to50">31–50</button>
+						<button class="round-filter-option" data-filter-type="size" data-filter-value="min20">Min. 20</button>
+						<button class="round-filter-option" data-filter-type="size" data-filter-value="min30">Min. 30</button>
+					</div>
+				</div>
+
+				<div class="round-filter-menu-actions">
+					<button id="clearRoundFiltersBtn" class="secondary" type="button">Filter zurücksetzen</button>
+				</div>
+			</div>
+		</div>
 
           <p id="roundSearchInfo" class="hint"></p>
 
@@ -104,7 +150,7 @@
           <div class="panel-title-row">
             <div>
               <h2 id="roundEditorTitle">Runde erstellen</h2>
-              <p id="roundEditorHint" class="hint">Ein Eintrag pro Zeile. Zusatzinfos mit „Antwort | Info“.</p>
+              <p id="roundEditorHint" class="hint">Tags mit Komma trennen. Einträge mit „Antwort | Info“.<p>
             </div>
 
             <button id="cancelEditRoundBtn" class="secondary" style="display: none;">Bearbeitung abbrechen</button>
@@ -119,8 +165,8 @@
             </label>
 
             <label>
-              Untertitel
-              <input id="newRoundSubtitle" type="text" placeholder="z. B. Top 25" />
+              Tags <span class="muted">(max. 5, je max. 10 Zeichen)</span>
+              <input id="newRoundSubtitle" type="text" placeholder="z. B. Podcast, PietSmiet, Musik" />
             </label>
 
             <label>
@@ -178,6 +224,7 @@
               <p id="currentRoundInfo" class="hint">Noch keine Runde geladen.</p>
               <div id="currentRoundNotes" class="current-round-notes"></div>
               <div id="roundFinishInfo" class="round-finish-info"></div>
+			  <div id="activeTeamQuickControls" class="active-team-quick-controls"></div>
             </div>
 
             <div class="button-row current-action-row">
@@ -193,7 +240,102 @@
         </section>
       </div>
     </section>
+	<section class="tab-panel" data-tab-panel="saves">
+  <div class="saves-tab-layout">
+    <section class="panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>Spielstand speichern</h2>
+          <p class="hint">Speichert Teams, Punkte, Rundenstatus, aktuelle Runde und Verlauf.</p>
+        </div>
+      </div>
+
+      <div class="save-create-box">
+        <label>
+          Name des Spielstands
+          <input id="saveGameNameInput" type="text" placeholder="z. B. Spieleabend Mai 2026" />
+        </label>
+
+        <button id="createSaveGameBtn">Aktuellen Stand speichern</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title-row">
+        <div>
+          <h2>Spielstände laden</h2>
+          <p class="hint">Gespeicherte Spielstände suchen, laden oder löschen.</p>
+        </div>
+
+        <button id="refreshSaveGamesBtn" class="secondary">Aktualisieren</button>
+      </div>
+
+      <div class="save-search">
+        <input id="saveGameSearchInput" type="text" placeholder="Spielstände suchen..." />
+        <button id="clearSaveGameSearchBtn" class="secondary" title="Suche löschen">×</button>
+      </div>
+
+      <p id="saveGameInfo" class="hint"></p>
+
+      <div id="saveGameList" class="save-game-list"></div>
+    </section>
+  </div>
+</section>
+	<section class="tab-panel" data-tab-panel="history">
+      <section class="panel">
+		<div class="panel-title-row">
+          <div>
+			<h2>Spielverlauf</h2>
+			<p class="hint">Abgeschlossene Runden und vergebene Punkte.</p>
+          </div>
+
+          <button id="clearHistoryBtn" class="danger">Verlauf leeren</button>
+		</div>
+
+		<div id="historySummary" class="history-summary"></div>
+		<div id="historyList" class="history-list"></div>
+      </section>
+	</section>
+	<section class="tab-panel" data-tab-panel="settings">
+  <section class="panel">
+    <div class="panel-title-row">
+      <div>
+        <h2>Einstellungen</h2>
+        <p class="hint">Aktuell: Hotkeys für die Moderation. Später können hier Darstellung, Sounds und weitere Optionen hinzukommen.</p>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-head">
+        <div>
+          <h3>Hotkeys</h3>
+          <p class="hint">Klicke auf eine Taste, um sie neu zu belegen. Backspace oder Entfernen löscht eine Belegung.</p>
+        </div>
+
+        <button id="resetDefaultHotkeysBtn" class="secondary">Standards wiederherstellen</button>
+      </div>
+
+      <div id="hotkeyRows" class="hotkey-rows"></div>
+    </div>
+  </section>
+</section>
   </main>
+
+<div id="appModalOverlay" class="app-modal-overlay" aria-hidden="true">
+  <div class="app-modal" role="dialog" aria-modal="true">
+    <div class="app-modal-header">
+      <h2 id="appModalTitle">Hinweis</h2>
+      <button id="appModalCloseBtn" class="app-modal-close" type="button">×</button>
+    </div>
+
+    <div id="appModalMessage" class="app-modal-message"></div>
+
+    <div class="app-modal-actions">
+      <button id="appModalCancelBtn" class="secondary" type="button">Abbrechen</button>
+      <button id="appModalConfirmBtn" type="button">OK</button>
+    </div>
+  </div>
+</div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/moderator.js"></script>

@@ -6,10 +6,22 @@ const playerItems = document.getElementById("playerItems");
 const teamBar = document.getElementById("teamBar");
 const playerTimer = document.getElementById("playerTimer");
 const timerText = document.getElementById("timerText");
+const answerCounter = document.getElementById("answerCounter");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 let state = null;
+let previousRevealState = null;
 
 socket.emit("role:player");
+	if (fullscreenBtn) {
+		fullscreenBtn.addEventListener("click", toggleFullscreen);
+
+	document.addEventListener("fullscreenchange", () => {
+		updateFullscreenButton();
+	});
+
+	updateFullscreenButton();
+	}
 
 socket.on("state:update", (newState) => {
   state = newState;
@@ -19,6 +31,7 @@ socket.on("state:update", (newState) => {
 function render() {
   renderRound();
   renderTimer();
+  renderAnswerCounter();
   renderTeams();
 }
 
@@ -54,6 +67,35 @@ function renderTimer() {
   playerTimer.classList.toggle("finished", remaining === 0);
 }
 
+function renderAnswerCounter() {
+  if (!answerCounter) return;
+
+  const counter = state?.answerCounter;
+
+  if (!counter || !counter.visible) {
+    answerCounter.className = "answer-counter";
+    answerCounter.textContent = "";
+    return;
+  }
+
+  const count = Number(counter.count) || 0;
+  const target = Number.isFinite(Number(counter.target))
+    ? Number(counter.target)
+    : "?";
+
+  answerCounter.textContent = `${count}/${target}`;
+
+  answerCounter.className = "answer-counter visible";
+
+  if (counter.locked) {
+    answerCounter.classList.add("locked");
+  }
+
+  if (target !== "?" && count >= target) {
+    answerCounter.classList.add("reached");
+  }
+}
+
 function renderItems(items) {
   const listSizeClass = getListSizeClass(items.length);
   clearListSizeClass();
@@ -66,16 +108,23 @@ function renderItems(items) {
   const rowCount = Math.ceil(items.length / 2);
 
   orderedItems.forEach((item, displayIndex) => {
-    const rowIndex = Math.floor(displayIndex / 2);
-    const isLeftColumn = displayIndex % 2 === 0;
-    const centerOffset = getCenterOffset(rowIndex, rowCount);
+	const rowIndex = Math.floor(displayIndex / 2);
+	const isLeftColumn = displayIndex % 2 === 0;
+	const centerOffset = getCenterOffset(rowIndex, rowCount);
 
-    const row = document.createElement("div");
-    row.className = `
+	const wasRevealedBefore = previousRevealState
+      ? previousRevealState.get(item.number) === true
+      : item.revealed;
+
+	const justRevealed = item.revealed && !wasRevealedBefore;
+
+	const row = document.createElement("div");
+	row.className = `
       player-item
       ${item.revealed ? "revealed" : "hidden"}
+      ${justRevealed ? "just-revealed" : ""}
       ${isLeftColumn ? "left-column" : "right-column"}
-    `;
+	`;
 
     row.style.setProperty("--center-offset", `${centerOffset}px`);
 
@@ -87,8 +136,12 @@ function renderItems(items) {
 	  </div>
 	`;
 
-    playerItems.appendChild(row);
+     playerItems.appendChild(row);
   });
+
+  previousRevealState = new Map(
+    items.map(item => [item.number, item.revealed])
+  );
 }
 
 function getListSizeClass(itemCount) {
@@ -138,6 +191,7 @@ function renderTeams() {
   state.teams.forEach(team => {
     const card = document.createElement("div");
     card.className = `player-team-card ${state.activeTeamId === team.id ? "active" : ""}`;
+	card.style.setProperty("--team-color", getTeamColor(team));
 
     const bidText = team.bid === "" || team.bid === null || team.bid === undefined
       ? "-"
@@ -185,6 +239,36 @@ function formatTime(totalSeconds) {
   const seconds = totalSeconds % 60;
 
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function getTeamColor(team) {
+  if (team && /^#[0-9a-fA-F]{6}$/.test(String(team.color || ""))) {
+    return team.color;
+  }
+
+  const defaults = ["#2563eb", "#16a34a", "#ca8a04", "#ea580c", "#dc2626"];
+  const index = Math.max(0, Number(team?.id || 1) - 1) % defaults.length;
+
+  return defaults[index];
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {
+      // Browser kann Vollbild blockieren, wenn es nicht durch direkten Klick ausgelöst wurde.
+    });
+    return;
+  }
+
+  document.exitFullscreen().catch(() => {});
+}
+
+function updateFullscreenButton() {
+  if (!fullscreenBtn) return;
+
+  fullscreenBtn.textContent = document.fullscreenElement
+    ? "Fenster"
+    : "Vollbild";
 }
 
 function escapeHtml(value) {

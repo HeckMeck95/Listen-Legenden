@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body class="player-body">
+  <button id="fullscreenBtn" class="fullscreen-button" title="Vollbild umschalten">
+    Vollbild
+  </button>
   <main class="player-screen">
     <section class="show-title">
       <div class="show-name">Listen-Legenden</div>
@@ -22,10 +25,12 @@
       </div>
 
       <div id="playerTimer" class="player-timer">
-        <div class="timer-ring">
-          <div id="timerText" class="timer-text">05:00</div>
-        </div>
-      </div>
+		<div class="timer-ring">
+		<div id="timerText" class="timer-text">05:00</div>
+	  </div>
+
+	  <div id="answerCounter" class="answer-counter"></div>
+	  </div>
     </section>
 
     <section id="teamBar" class="team-bar">
