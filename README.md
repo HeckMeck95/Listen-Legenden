@@ -95,7 +95,7 @@ Alternativ kann die App auch über die Konsole gestartet werden:
   
 `nmp install`  
 `npm start`  
-Danach im Browser auf
+Danach im Browser auf  
 http://localhost:3000/moderator.html  
 http://localhost:3000/player.html  
 
