@@ -76,16 +76,28 @@ Links habt ihr noch die EInstellungen für den Timer. Ihr könnt auch Kommazahle
 <img width="1902" height="1063" alt="grafik" src="https://github.com/user-attachments/assets/9db59d27-9852-4055-b21b-d7553fc136f9" />
 
 # INSTALLATION
-1. Installier [Node.js](https://nodejs.org/en)  
-2. Lade den latest release von Listen Legenden runter  
-3. Schmeiß den Ordner irgendwo hin  
-4. **Für Leute die wenig Ahnung davon haben, doppelklick auf *install.bat* und macht dann mit Schritt 7 weiter**  
-5. Öffne den Ordner, klicke in die Adresszeile und schreibe "cmd"  
-   + Dadurch öffnet sich die Eingabeaufforderung direkt in dem Ordner  
-6. `npm install` **Enter**  
-   + Die Eingabeaufforderung kannst du wieder schließen wenn alles installiert ist.  
-7. Doppelklick auf start.bat  
 
+## Voraussetzung
+
+Installiere [Node.js](https://nodejs.org/en)  
+
+## Windows Schnellstart
+
+1. Lade den latest release von Listen Legenden runter  
+2. Schmeiß den Ordner irgendwo hin  
+3. Doppelklick auf `install.bat`
+4. Doppelklick auf `start.bat`
+5. Die Moderator- und Spieleransicht öffnen sich automatisch in deinem Standardbrowser.
+
+## Manueller Start
+
+Alternativ kann die App auch über die Konsole gestartet werden:  
+  
+`nmp install`  
+`npm start`  
+Danach im Browser auf
+http://localhost:3000/moderator.html  
+http://localhost:3000/player.html  
 
 # ROADMAP
 ## Auf dem Plan / Nahe Zukunft  
@@ -105,4 +117,3 @@ Links habt ihr noch die EInstellungen für den Timer. Ihr könnt auch Kommazahle
 + Hinzufügen von Wie passt das zusammen?   
 + Hinzufügen von Quiz Poker
 + Hinzufügen von einfachem Buzzerraum
-
