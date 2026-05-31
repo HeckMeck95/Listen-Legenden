@@ -2388,3 +2388,53 @@ input[type="color"] {
   padding: 1px 8px;
   line-height: 1.08;
 }
+
+/* Dynamisches Listenlayout über player.js */
+
+.player-items.dynamic-list-layout {
+  grid-auto-rows: var(--list-row-height);
+  row-gap: var(--list-row-gap);
+  column-gap: var(--list-column-gap);
+}
+
+.player-items.dynamic-list-layout .player-item {
+  min-height: var(--list-row-height);
+  height: var(--list-row-height);
+}
+
+.player-items.dynamic-list-layout .player-item-number {
+  width: var(--list-number-width);
+  height: var(--list-number-height);
+  min-height: var(--list-number-height);
+  font-size: var(--list-number-font-size);
+}
+
+.player-items.dynamic-list-layout .player-item.left-column {
+  grid-template-columns: 1fr var(--list-number-width);
+}
+
+.player-items.dynamic-list-layout .player-item.right-column {
+  grid-template-columns: var(--list-number-width) 1fr;
+}
+
+.player-items.dynamic-list-layout .player-item-text {
+  font-size: var(--list-text-font-size);
+  padding: var(--list-text-padding-y) var(--list-text-padding-x);
+  line-height: var(--list-line-height);
+}
+
+/* Fix: Unterlängen bei g, j, q, y, p nicht abschneiden */
+
+.player-items.dynamic-list-layout .answer-main,
+.player-items.dynamic-list-layout .answer-info {
+  line-height: 1.22;
+  padding-bottom: 2px;
+}
+
+.player-items.dynamic-list-layout .player-item-text {
+  overflow: visible;
+}
+
+.player-items.dynamic-list-layout .player-item {
+  overflow: visible;
+}

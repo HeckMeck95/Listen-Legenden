@@ -97,12 +97,14 @@ function renderAnswerCounter() {
 }
 
 function renderItems(items) {
-  const listSizeClass = getListSizeClass(items.length);
-  clearListSizeClass();
+const listSizeClass = getListSizeClass(items.length);
+clearListSizeClass();
 
-  document.body.classList.add(listSizeClass);
-  playerItems.className = `player-items ${listSizeClass}`;
-  playerItems.innerHTML = "";
+document.body.classList.add(listSizeClass);
+playerItems.className = `player-items ${listSizeClass} dynamic-list-layout`;
+playerItems.innerHTML = "";
+
+applyPlayerListLayout(items.length);
 
   const orderedItems = orderItemsForTwoColumns(items);
   const rowCount = Math.ceil(items.length / 2);
@@ -272,6 +274,165 @@ function getCenterOffsetSettings(itemCount, isFullscreen) {
   return {
     maxOffset: selected.maxOffset,
     fadeRows
+  };
+}
+
+function applyPlayerListLayout(itemCount) {
+  const isFullscreen = document.body.classList.contains("fullscreen-mode");
+  const settings = getPlayerListLayoutSettings(itemCount, isFullscreen);
+
+  Object.entries(settings).forEach(([key, value]) => {
+    playerItems.style.setProperty(key, value);
+  });
+}
+
+function getPlayerListLayoutSettings(itemCount, isFullscreen) {
+  // Diese Werte steuern Größe und Abstand der Listeneinträge.
+  //
+  // rowHeight       = Höhe einer Zeile
+  // rowGap          = Abstand zwischen Zeilen
+  // columnGap       = Abstand zwischen linker und rechter Spalte
+  // numberWidth     = Breite der Nummernbox
+  // numberHeight    = Höhe der Nummernbox
+  // numberFontSize  = Schriftgröße der Nummer
+  // textFontSize    = Schriftgröße der Antwort
+  // textPaddingY/X  = Innenabstand des Antworttexts
+  // lineHeight      = Zeilenhöhe des Antworttexts
+
+  const settings = {
+    small: { //Liste 10 und weniger
+      window: {
+        rowHeight: "62px",
+        rowGap: "18px",
+        columnGap: "28px",
+        numberWidth: "68px",
+        numberHeight: "52px",
+        numberFontSize: "27px",
+        textFontSize: "clamp(26px, 2vw, 38px)",
+        textPaddingY: "6px",
+        textPaddingX: "18px",
+        lineHeight: "1.30"
+      },
+      fullscreen: {
+        rowHeight: "64px",
+        rowGap: "18px",
+        columnGap: "34px",
+        numberWidth: "66px",
+        numberHeight: "54px",
+        numberFontSize: "27px",
+        textFontSize: "clamp(25px, 2vw, 38px)",
+        textPaddingY: "6px",
+        textPaddingX: "16px",
+        lineHeight: "1.30"
+      }
+    },
+
+    medium: { //Liste 11-20
+      window: {
+        rowHeight: "44px",
+        rowGap: "16px",
+        columnGap: "28px",
+        numberWidth: "54px",
+        numberHeight: "38px",
+        numberFontSize: "21px",
+        textFontSize: "clamp(19px, 1.45vw, 27px)",
+        textPaddingY: "4px",
+        textPaddingX: "14px",
+        lineHeight: "1.30"
+      },
+      fullscreen: {
+        rowHeight: "48px",
+        rowGap: "12px",
+        columnGap: "34px",
+        numberWidth: "56px",
+        numberHeight: "40px",
+        numberFontSize: "22px",
+        textFontSize: "clamp(20px, 1.55vw, 29px)",
+        textPaddingY: "4px",
+        textPaddingX: "14px",
+        lineHeight: "1.30"
+      }
+    },
+
+    large: { //Liste 21-30
+      window: {
+        rowHeight: "36px",
+        rowGap: "7px",
+        columnGap: "28px",
+        numberWidth: "44px",
+        numberHeight: "32px",
+        numberFontSize: "17px",
+        textFontSize: "clamp(15px, 1.16vw, 21px)",
+        textPaddingY: "3px",
+        textPaddingX: "11px",
+        lineHeight: "1.30"
+      },
+      fullscreen: {
+        rowHeight: "39px",
+        rowGap: "8px",
+        columnGap: "34px",
+        numberWidth: "48px",
+        numberHeight: "34px",
+        numberFontSize: "18px",
+        textFontSize: "clamp(16px, 1.25vw, 23px)",
+        textPaddingY: "3px",
+        textPaddingX: "11px",
+        lineHeight: "1.30"
+      }
+    },
+
+    huge: { //Liste über 30
+      window: {
+        rowHeight: "24px",
+        rowGap: "5px",
+        columnGap: "24px",
+        numberWidth: "35px",
+        numberHeight: "22px",
+        numberFontSize: "13px",
+        textFontSize: "clamp(12px, 0.95vw, 16px)",
+        textPaddingY: "1px",
+        textPaddingX: "7px",
+        lineHeight: "1.20"
+      },
+      fullscreen: {
+        rowHeight: "40px",
+        rowGap: "4px",
+        columnGap: "31px",
+        numberWidth: "40px",
+        numberHeight: "27px",
+        numberFontSize: "15px",
+        textFontSize: "clamp(14px, 1.04vw, 18px)",
+        textPaddingY: "0px",
+        textPaddingX: "8px",
+        lineHeight: "1.30"
+      }
+    }
+  };
+
+  let sizeKey = "huge";
+
+  if (itemCount <= 10) {
+    sizeKey = "small";
+  } else if (itemCount <= 20) {
+    sizeKey = "medium";
+  } else if (itemCount <= 30) {
+    sizeKey = "large";
+  }
+
+  const modeKey = isFullscreen ? "fullscreen" : "window";
+  const selected = settings[sizeKey][modeKey];
+
+  return {
+    "--list-row-height": selected.rowHeight,
+    "--list-row-gap": selected.rowGap,
+    "--list-column-gap": selected.columnGap,
+    "--list-number-width": selected.numberWidth,
+    "--list-number-height": selected.numberHeight,
+    "--list-number-font-size": selected.numberFontSize,
+    "--list-text-font-size": selected.textFontSize,
+    "--list-text-padding-y": selected.textPaddingY,
+    "--list-text-padding-x": selected.textPaddingX,
+    "--list-line-height": selected.lineHeight
   };
 }
 

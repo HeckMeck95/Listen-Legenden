@@ -1646,6 +1646,9 @@ socket.on("round:delete", (roundId) => {
 	const activeTeamName = activeTeam.name;
 	const receiverNames = otherTeams.map(team => team.name).join(", ");
 	const roundTitle = gameState.currentRound.title;
+  const receiverText = otherTeams.length === 1
+  ? `${receiverNames} erhält +${lossPoints} Punkte.`
+  : `${receiverNames} erhalten jeweils +${lossPoints} Punkte.`;
 
 	addHistoryEntry({
 	  type: "loss",
@@ -1669,7 +1672,7 @@ socket.on("round:delete", (roundId) => {
 
     socket.emit("round:finishResult", {
       ok: true,
-      message: `Runde abgeschlossen: ${roundTitle}\n${activeTeamName} scheitert.\n${receiverNames} erhalten jeweils +${lossPoints} Punkte.`
+      message: `Runde abgeschlossen: ${roundTitle}\n${activeTeamName} scheitert.\n${receiverText}`
     });
   } catch (error) {
     console.error("Runde konnte nicht als verloren abgeschlossen werden:", error);

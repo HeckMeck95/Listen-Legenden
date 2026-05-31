@@ -473,19 +473,22 @@ finishLossBtn.addEventListener("click", async () => {
     return;
   }
 
-  const receiverNames = info.otherTeams.map(team => team.name).join(", ");
+const receiverNames = info.otherTeams.map(team => team.name).join(", ");
+const receiverText = info.otherTeams.length === 1
+  ? `${receiverNames} erhält +${info.lossPoints} Punkte.`
+  : `${receiverNames} erhalten jeweils +${info.lossPoints} Punkte.`;
 
-  const ok = await showAppConfirm(
-    `Runde als VERLOREN abschließen?\n\n` +
-    `${info.activeTeam.name} erhält keine Punkte.\n` +
-    `${receiverNames} erhalten jeweils +${info.lossPoints} Punkte.\n\n` +
-    `Danach werden Gebote und Fehler zurückgesetzt.`,
-    {
-      title: "Runde verloren?",
-      confirmText: "Abschließen",
-      danger: true
-    }
-  );
+const ok = await showAppConfirm(
+  `Runde als VERLOREN abschließen?\n\n` +
+  `${info.activeTeam.name} erhält keine Punkte.\n` +
+  `${receiverText}\n\n` +
+  `Danach werden Gebote und Fehler zurückgesetzt.`,
+  {
+    title: "Runde verloren?",
+    confirmText: "Abschließen",
+    danger: true
+  }
+);
 
   if (ok) {
     socket.emit("round:finishLoss");
