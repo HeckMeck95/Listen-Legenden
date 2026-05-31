@@ -6,7 +6,7 @@ Dann hab ich jetzt endlich eine Web-App für dich!
   
 Eine Nachbildung von ***Wer bietet mehr?*** von [PietSmiet](https://www.youtube.com/@pietsmiet).
 
-### Listen Legenden!
+### Listen Legenden
 
 Steuere alles nötige in der Moderationsansicht, während sich deine Freunde an der schönen Spieleransicht vergnügen!
 
@@ -47,7 +47,6 @@ Hier findet ihr eine Übersicht zur aktuell laufenden Runde und eine Kurzanleitu
 
 <img width="1920" height="1080" alt="grafik" src="https://github.com/user-attachments/assets/2f90a5ff-ae73-4415-ac7c-bfbe54296b8a" />
 
-
 ### Teams
 
 Hier könnt ihr Teams hinzufügen oder löschen, den Teams namen geben, eine Farbe zuordnen, Notieren wer in welchem Team spielt,  
@@ -68,7 +67,6 @@ Wichtig bei den Listeneinträgen ist, alles was nach dem | steht, gilt als Info 
 
 <img width="1920" height="1080" alt="grafik" src="https://github.com/user-attachments/assets/e328f3f2-099b-486d-8211-f2f950d5f0bd" />
 
-
 ### Aktuelle Runde
 
 Hier seht ihr die Antworten zur aktuellen Runde. Per Klick auf einen Eintrag wird er für die Spieler sichtbar.
@@ -77,7 +75,6 @@ Wenn ihr im Tab "Teams" ein aktives Team gesetzt habt und ein Gebot eingetragen 
 Links habt ihr noch die Einstellungen für den Timer. Ihr könnt auch Kommazahlen eingeben, falls ihr 2.5 Minuten nutzen wollt. Beim Reset oder Neuem Spiel springt der Timer immer auf 5 Minuten.
 
 <img width="1920" height="1078" alt="grafik" src="https://github.com/user-attachments/assets/bfe8d126-09f3-461b-bed1-9c8439d70b57" />
-
 
 ### Spielstände
 
@@ -122,10 +119,10 @@ Alternativ kann die App auch über die Konsole gestartet werden:
 `nmp install`  
 `npm start`  
 Danach im Browser auf  
-http://localhost:3000/moderator.html  
-http://localhost:3000/player.html  
+<http://localhost:3000/moderator.html>  
+<http://localhost:3000/player.html>  
 
-#  :motorway: :world_map: ROADMAP :motorway: :world_map:
+# :motorway: :world_map: ROADMAP :motorway: :world_map:
 
 ## Auf dem Plan / Nahe Zukunft  
 
