@@ -1,3 +1,19 @@
+/* ============================================================================
+   Listen-Legenden - Moderator Script
+   --------------------------------------------------------------------------
+   Steuert die komplette Moderatoransicht:
+   Tabs, Teams, Runden, Timer, Spielstände, Verlauf, Einstellungen, Hotkeys
+   und die eigenen App-Popups.
+
+   Hinweis: Die Logik wurde bewusst in einer Datei belassen. Die Abschnitte
+   sollen das spätere Finden und Bearbeiten einzelner Features erleichtern,
+   ohne das Verhalten der App zu verändern.
+   ============================================================================ */
+
+// ============================================================================
+// Socket and DOM references
+// ============================================================================
+
 const socket = io();
 
 const roundCards = document.getElementById("roundCards");
@@ -65,11 +81,21 @@ const appModalCancelBtn = document.getElementById("appModalCancelBtn");
 const appModalConfirmBtn = document.getElementById("appModalConfirmBtn");
 const appModalCloseBtn = document.getElementById("appModalCloseBtn");
 
+// ============================================================================
+// Runtime state
+// ============================================================================
+
 let activeModalResolve = null;
 let activeModalKeyHandler = null;
 
 let state = null;
 
+// ============================================================================
+// Hotkey configuration
+// ============================================================================
+
+// These default values are also mirrored on the server.
+// Keep both lists in sync when adding new hotkey actions.
 const DEFAULT_HOTKEYS = {
   timerToggle: "Space",
   timerReset: "KeyR",
@@ -108,24 +134,28 @@ const HOTKEY_ACTIONS = [
     description: "Öffnet die Bestätigung für einen gewonnenen Rundenabschluss."
   },
   {
-	id: "finishLoss",
-	label: "Runde verloren",
-	description: "Öffnet die Bestätigung für einen verlorenen Rundenabschluss."
+  id: "finishLoss",
+  label: "Runde verloren",
+  description: "Öffnet die Bestätigung für einen verlorenen Rundenabschluss."
   },
   {
-	id: "activeErrorPlus",
-	label: "+ Fehler aktives Team",
-	description: "Erhöht die Fehler des aktiven Teams um 1."
+  id: "activeErrorPlus",
+  label: "+ Fehler aktives Team",
+  description: "Erhöht die Fehler des aktiven Teams um 1."
   },
   {
-	id: "activeErrorMinus",
-	label: "- Fehler aktives Team",
-	description: "Senkt die Fehler des aktiven Teams um 1."
+  id: "activeErrorMinus",
+  label: "- Fehler aktives Team",
+  description: "Senkt die Fehler des aktiven Teams um 1."
   }
 ];
 
 let currentHotkeys = { ...DEFAULT_HOTKEYS };
 let hotkeyCaptureAction = null;
+
+// ============================================================================
+// Tab, search and filter state
+// ============================================================================
 
 const tabButtons = document.querySelectorAll("[data-tab-target]");
 const tabPanels = document.querySelectorAll("[data-tab-panel]");
@@ -135,6 +165,10 @@ let roundSearchTerm = "";
 let saveGameSearchTerm = "";
 let activeRoundStatusFilter = "all";
 let activeRoundSizeFilter = "all";
+
+// ============================================================================
+// Initialization and global listeners
+// ============================================================================
 
 tabButtons.forEach(button => {
   button.addEventListener("click", () => {
@@ -157,6 +191,10 @@ document.addEventListener("keydown", event => {
     closeAllRoundOptionMenus();
   }
 });
+
+// ============================================================================
+// Socket event handlers
+// ============================================================================
 
 socket.emit("role:moderator");
 
@@ -258,6 +296,10 @@ socket.on("save:deleteResult", (result) => {
   showAppAlert(`Spielstand gelöscht:\n${result.filename}`, "Spielstand gelöscht");
 });
 
+// ============================================================================
+// UI event bindings
+// ============================================================================
+
 resetDefaultHotkeysBtn.addEventListener("click", async () => {
   const ok = await showAppConfirm(
     "Hotkeys wirklich auf Standard zurücksetzen?",
@@ -331,22 +373,22 @@ clearRoundFiltersBtn.addEventListener("click", () => {
 
 createRoundBtn.addEventListener("click", () => {
   socket.emit("round:create", {
-	title: newRoundTitle.value,
-	subtitle: normalizeTagText(newRoundSubtitle.value),
-	source: newRoundSource.value,
-	notes: newRoundNotes.value,
-	itemsText: newRoundItems.value
+  title: newRoundTitle.value,
+  subtitle: normalizeTagText(newRoundSubtitle.value),
+  source: newRoundSource.value,
+  notes: newRoundNotes.value,
+  itemsText: newRoundItems.value
   });
 });
 
 saveRoundChangesBtn.addEventListener("click", () => {
   socket.emit("round:update", {
-	roundId: editingRoundId.value,
-	title: newRoundTitle.value,
-	subtitle: normalizeTagText(newRoundSubtitle.value),
-	source: newRoundSource.value,
-	notes: newRoundNotes.value,
-	itemsText: newRoundItems.value
+  roundId: editingRoundId.value,
+  title: newRoundTitle.value,
+  subtitle: normalizeTagText(newRoundSubtitle.value),
+  source: newRoundSource.value,
+  notes: newRoundNotes.value,
+  itemsText: newRoundItems.value
   });
 });
 
@@ -511,6 +553,10 @@ resetTimerBtn.addEventListener("click", () => {
   socket.emit("timer:reset");
 });
 
+// ============================================================================
+// Main render loop
+// ============================================================================
+
 function render() {
   if (!state) return;
 
@@ -524,6 +570,10 @@ function render() {
   renderHistory();
   renderSettings();
 }
+
+// ============================================================================
+// Tabs and dashboard
+// ============================================================================
 
 function switchModeratorTab(tabName) {
   activeModeratorTab = tabName;
@@ -589,18 +639,22 @@ function renderDashboard() {
       <span>Gespielt / Offen</span>
       <strong>${playedCount} / ${openCount}</strong>
     </div>
-	
-	<div class="dashboard-status-card">
-	  <span>Verlauf</span>
-	  <strong>${historyCount} Einträge</strong>
-	</div>
-	
-	<div class="dashboard-status-card">
-	  <span>Spielstände</span>
-	  <strong>${saveCount}</strong>
-	</div>
+  
+  <div class="dashboard-status-card">
+    <span>Verlauf</span>
+    <strong>${historyCount} Einträge</strong>
+  </div>
+  
+  <div class="dashboard-status-card">
+    <span>Spielstände</span>
+    <strong>${saveCount}</strong>
+  </div>
   `;
 }
+
+// ============================================================================
+// Settings and hotkey editor
+// ============================================================================
 
 function renderSettings() {
   if (!hotkeyRows) return;
@@ -642,6 +696,10 @@ function renderSettings() {
     hotkeyRows.appendChild(row);
   });
 }
+
+// ============================================================================
+// Save games
+// ============================================================================
 
 function renderSaveGames() {
   if (!saveGameList || !saveGameInfo) return;
@@ -771,6 +829,10 @@ function renderSaveTeamBadges(teams) {
     .join("");
 }
 
+// ============================================================================
+// Game history
+// ============================================================================
+
 function renderHistory() {
   if (!historySummary || !historyList) return;
 
@@ -808,37 +870,37 @@ function renderHistory() {
 
   history.forEach(entry => {
     const card = document.createElement("div");
-	card.className = `history-entry ${entry.type === "win" ? "win" : "loss"}`;
+  card.className = `history-entry ${entry.type === "win" ? "win" : "loss"}`;
 
     const awardedHtml = Array.isArray(entry.awardedPoints) && entry.awardedPoints.length > 0
-		? entry.awardedPoints
-			.map(award => {
-				const color = getHistoryTeamColor(award.teamId, award.teamColor);
+    ? entry.awardedPoints
+      .map(award => {
+        const color = getHistoryTeamColor(award.teamId, award.teamColor);
 
-				return `
-					<span class="history-award-badge" style="--team-color: ${escapeAttribute(color)};">
-						<span class="history-award-team">${escapeHtml(award.teamName)}</span>
-						<strong>+${award.points}</strong>
-					</span>
-				`;
-			})
-			.join("")
-		: `<span class="history-muted">Keine Punkte vergeben</span>`;
+        return `
+          <span class="history-award-badge" style="--team-color: ${escapeAttribute(color)};">
+            <span class="history-award-team">${escapeHtml(award.teamName)}</span>
+            <strong>+${award.points}</strong>
+          </span>
+        `;
+      })
+      .join("")
+    : `<span class="history-muted">Keine Punkte vergeben</span>`;
 
-	const scoreHtml = Array.isArray(entry.scoresAfter)
-		? entry.scoresAfter
-			.map(score => {
-				const color = getHistoryTeamColor(score.teamId, score.teamColor);
+  const scoreHtml = Array.isArray(entry.scoresAfter)
+    ? entry.scoresAfter
+      .map(score => {
+        const color = getHistoryTeamColor(score.teamId, score.teamColor);
 
-				return `
-					<span class="history-score-badge" style="--team-color: ${escapeAttribute(color)};">
-						<span>${escapeHtml(score.teamName)}</span>
-						<strong>${score.score}</strong>
-					</span>
-				`;
-			})
-			.join("")
-		: "";
+        return `
+          <span class="history-score-badge" style="--team-color: ${escapeAttribute(color)};">
+            <span>${escapeHtml(score.teamName)}</span>
+            <strong>${score.score}</strong>
+          </span>
+        `;
+      })
+      .join("")
+    : "";
 
     card.innerHTML = `
       <div class="history-entry-top">
@@ -856,22 +918,26 @@ function renderHistory() {
         <div><strong>Aktives Team:</strong> ${escapeHtml(entry.activeTeamName || "-")}</div>
         <div><strong>Gebot:</strong> ${entry.bid ?? "-"}</div>
         <div class="history-line">
-		<strong>Punkte:</strong>
-		<div class="history-awards">${awardedHtml}</div>
-	</div>
+    <strong>Punkte:</strong>
+    <div class="history-awards">${awardedHtml}</div>
+  </div>
 
-	${scoreHtml ? `
-		<div class="history-line">
-			<strong>Stand danach:</strong>
-			<div class="history-scores">${scoreHtml}</div>
-		</div>
-		` : ""}
+  ${scoreHtml ? `
+    <div class="history-line">
+      <strong>Stand danach:</strong>
+      <div class="history-scores">${scoreHtml}</div>
+    </div>
+    ` : ""}
       </div>
     `;
 
     historyList.appendChild(card);
   });
 }
+
+// ============================================================================
+// Team color helpers
+// ============================================================================
 
 function getTeamColor(team) {
   if (team && /^#[0-9a-fA-F]{6}$/.test(String(team.color || ""))) {
@@ -893,6 +959,10 @@ function getHistoryTeamColor(teamId, storedColor) {
 
   return getTeamColor(currentTeam || { id: teamId });
 }
+
+// ============================================================================
+// Global hotkey runtime
+// ============================================================================
 
 function handleGlobalHotkeys(event) {
   if (hotkeyCaptureAction) {
@@ -1025,19 +1095,19 @@ function executeHotkeyAction(actionId) {
       break;
 
     case "finishLoss":
-	  finishLossBtn.click();
-	  break;
+    finishLossBtn.click();
+    break;
 
-	case "activeErrorPlus":
-	  socket.emit("activeTeam:errorDelta", 1);
-	  break;
+  case "activeErrorPlus":
+    socket.emit("activeTeam:errorDelta", 1);
+    break;
 
-	case "activeErrorMinus":
-	  socket.emit("activeTeam:errorDelta", -1);
-	  break;
+  case "activeErrorMinus":
+    socket.emit("activeTeam:errorDelta", -1);
+    break;
 
-	default:
-	break;
+  default:
+  break;
   }
 }
 
@@ -1107,6 +1177,10 @@ function formatDateTime(value) {
   });
 }
 
+// ============================================================================
+// Timer
+// ============================================================================
+
 function renderTimer() {
   if (!state.timer) return;
 
@@ -1116,6 +1190,10 @@ function renderTimer() {
     timerMinutesInput.value = state.timer.duration / 60;
   }
 }
+
+// ============================================================================
+// Teams
+// ============================================================================
 
 function renderTeams() {
   teamControls.innerHTML = "";
@@ -1136,16 +1214,16 @@ function renderTeams() {
       </div>
 
       <div class="team-name-color-row">
-		<label>
-		  Teamname
-		  <input type="text" value="${escapeAttribute(team.name)}" data-field="name" />
-		</label>
+    <label>
+      Teamname
+      <input type="text" value="${escapeAttribute(team.name)}" data-field="name" />
+    </label>
 
-		<label>
-		  Teamfarbe
-		  <input type="color" value="${escapeAttribute(getTeamColor(team))}" data-field="color" />
-		</label>
-	  </div>
+    <label>
+      Teamfarbe
+      <input type="color" value="${escapeAttribute(getTeamColor(team))}" data-field="color" />
+    </label>
+    </div>
 
       <label>
         Spieler im Team <span class="muted">(nur Moderator)</span>
@@ -1190,13 +1268,13 @@ function renderTeams() {
     `;
 
     const nameInput = card.querySelector('[data-field="name"]');
-	const colorInput = card.querySelector('[data-field="color"]');
+  const colorInput = card.querySelector('[data-field="color"]');
     const playersInput = card.querySelector('[data-field="players"]');
     const scoreInput = card.querySelector('[data-field="scoreInput"]');
     const bidInput = card.querySelector('[data-field="bid"]');
 
     nameInput.addEventListener("change", () => {
-	  socket.emit("team:update", {
+    socket.emit("team:update", {
       teamId: team.id,
       name: nameInput.value,
       players: playersInput.value,
@@ -1204,22 +1282,22 @@ function renderTeams() {
     });
   });
 
-	playersInput.addEventListener("change", () => {
-	  socket.emit("team:update", {
+  playersInput.addEventListener("change", () => {
+    socket.emit("team:update", {
       teamId: team.id,
       name: nameInput.value,
       players: playersInput.value,
       color: colorInput.value
-	});
+  });
   });
 
-	colorInput.addEventListener("input", () => {
-	  socket.emit("team:update", {
+  colorInput.addEventListener("input", () => {
+    socket.emit("team:update", {
       teamId: team.id,
       name: nameInput.value,
       players: playersInput.value,
       color: colorInput.value
-	});
+  });
   });
 
     bidInput.addEventListener("change", () => {
@@ -1276,6 +1354,10 @@ function renderTeams() {
     teamControls.appendChild(card);
   });
 }
+
+// ============================================================================
+// Rounds list, filters, favorites and card menu
+// ============================================================================
 
 function loadRandomOpenRound() {
   if (!state || !Array.isArray(state.rounds)) {
@@ -1380,7 +1462,7 @@ function renderRounds() {
       closeAllRoundOptionMenus();
 
       if (!isOpen) {
-		card.classList.add("menu-open");
+    card.classList.add("menu-open");
         menu.classList.add("open");
       }
     });
@@ -1441,6 +1523,7 @@ function renderRoundTags(round) {
   `;
 }
 
+// Tags are stored in the old subtitle field for backwards compatibility.
 function getRoundTags(round) {
   return String(round.subtitle || "")
     .split(",")
@@ -1450,6 +1533,7 @@ function getRoundTags(round) {
     .map(tag => tag.slice(0, 10));
 }
 
+// Enforce max. 5 tags with max. 10 characters each before saving.
 function normalizeTagText(value) {
   return String(value || "")
     .split(",")
@@ -1470,6 +1554,7 @@ function closeAllRoundOptionMenus() {
   });
 }
 
+// Search and dropdown filters are combined here.
 function getFilteredRounds(rounds) {
   return rounds.filter(round => {
     if (!matchesRoundStatusFilter(round)) {
@@ -1631,6 +1716,10 @@ function getRoundSizeFilterLabel(filterName) {
   }
 }
 
+// ============================================================================
+// Round editor
+// ============================================================================
+
 function enterRoundEditMode(round) {
   editingRoundId.value = round.id;
   newRoundTitle.value = round.title || "";
@@ -1672,11 +1761,11 @@ function exitRoundEditMode(clearFields) {
   editingRoundId.value = "";
 
   if (clearFields) {
-	newRoundTitle.value = "";
-	newRoundSubtitle.value = "";
-	newRoundSource.value = "";
-	newRoundNotes.value = "";
-	newRoundItems.value = "";
+  newRoundTitle.value = "";
+  newRoundSubtitle.value = "";
+  newRoundSource.value = "";
+  newRoundNotes.value = "";
+  newRoundItems.value = "";
   }
 
   roundEditorTitle.textContent = "Runde erstellen";
@@ -1687,6 +1776,11 @@ function exitRoundEditMode(clearFields) {
   cancelEditRoundBtn.style.display = "none";
 }
 
+// ============================================================================
+// Current round and round finish controls
+// ============================================================================
+
+// Used both for the preview text and the win/loss confirmation popups.
 function getRoundFinishPreview() {
   if (!state.currentRound) {
     return {
@@ -1813,10 +1907,10 @@ function renderCurrentRound() {
   moderatorItems.innerHTML = "";
 
   if (!state.currentRound) {
-	currentRoundInfo.textContent = "Noch keine Runde geladen.";
-	currentRoundNotes.innerHTML = "";
-	roundFinishInfo.innerHTML = "";
-	return;
+  currentRoundInfo.textContent = "Noch keine Runde geladen.";
+  currentRoundNotes.innerHTML = "";
+  roundFinishInfo.innerHTML = "";
+  return;
   }
 
   currentRoundInfo.textContent = `${state.currentRound.title} · ${state.currentRound.items.length} Einträge`;
@@ -1832,12 +1926,12 @@ function renderCurrentRound() {
     row.className = `moderator-item ${isRevealed ? "revealed" : ""}`;
 
     row.innerHTML = `
-	  <div class="item-number">${originalIndex + 1}</div>
-	  <div class="item-text">
-		<span class="moderator-answer-main">${escapeHtml(item.text)}</span>
-		${item.info ? `<span class="moderator-answer-info">${escapeHtml(item.info)}</span>` : ""}
-	  </div>
-	`;
+    <div class="item-number">${originalIndex + 1}</div>
+    <div class="item-text">
+    <span class="moderator-answer-main">${escapeHtml(item.text)}</span>
+    ${item.info ? `<span class="moderator-answer-info">${escapeHtml(item.info)}</span>` : ""}
+    </div>
+  `;
 
     row.addEventListener("click", () => {
       socket.emit("item:toggle", originalIndex);
@@ -1885,12 +1979,20 @@ function orderModeratorItemsForTwoColumns(items) {
   return ordered;
 }
 
+// ============================================================================
+// Formatting helpers
+// ============================================================================
+
 function formatTime(totalSeconds) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
 
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
+
+// ============================================================================
+// App modal / custom alerts and confirmations
+// ============================================================================
 
 function showAppAlert(message, title = "Hinweis") {
   return showAppModal({
@@ -1914,6 +2016,7 @@ function showAppConfirm(message, options = {}) {
   });
 }
 
+// Returns a Promise<boolean>: true = confirmed, false = cancelled.
 function showAppModal({ title, message, confirmText, cancelText, danger, success }) {
   return new Promise(resolve => {
     if (
@@ -1999,6 +2102,10 @@ function closeAppModal(result, resolveModal = true) {
 window.alert = message => {
   showAppAlert(String(message || ""), "Listen-Legenden");
 };
+
+// ============================================================================
+// Escaping helpers
+// ============================================================================
 
 function escapeHtml(value) {
   return String(value)

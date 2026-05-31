@@ -1,3 +1,7 @@
+// =====================================
+// Imports, server setup and constants
+// =====================================
+
 const express = require("express");
 const http = require("http");
 const path = require("path");
@@ -19,6 +23,10 @@ const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// =====================================
+// Global runtime state
+// =====================================
+
 let nextTeamId = 1;
 let timerInterval = null;
 let favoriteRoundIds = [];
@@ -31,9 +39,9 @@ const DEFAULT_SETTINGS = {
     revealAll: "",
     finishWin: "KeyG",
     finishLoss: "KeyV",
-	activeErrorPlus: "KeyF",
-  activeErrorMinus: "KeyD"
-  }
+    activeErrorPlus: "KeyF",
+    activeErrorMinus: "KeyD",
+  },
 };
 let appSettings = getDefaultSettings();
 
@@ -42,7 +50,7 @@ const DEFAULT_TEAM_COLORS = [
   "#16a34a", // Grün
   "#ca8a04", // Gelb/Gold
   "#ea580c", // Orange
-  "#dc2626"  // Rot
+  "#dc2626", // Rot
 ];
 
 let gameState = {
@@ -56,18 +64,20 @@ let gameState = {
   timer: {
     duration: 300,
     remaining: 300,
-    running: false
-  }
+    running: false,
+  },
 };
+
+// =====================================
+// Round file handling and round library
+// =====================================
 
 function getRoundFiles() {
   if (!fs.existsSync(ROUNDS_DIR)) {
     fs.mkdirSync(ROUNDS_DIR);
   }
 
-  return fs
-    .readdirSync(ROUNDS_DIR)
-    .filter(file => file.endsWith(".json"));
+  return fs.readdirSync(ROUNDS_DIR).filter((file) => file.endsWith(".json"));
 }
 
 function readRoundFile(filename) {
@@ -86,7 +96,7 @@ function readRoundFile(filename) {
     notes: data.notes || "",
     items: rawItems
       .map(normalizeRoundItem)
-      .filter(item => item.text.length > 0)
+      .filter((item) => item.text.length > 0),
   };
 }
 
@@ -94,39 +104,39 @@ function normalizeRoundItem(item) {
   if (typeof item === "string") {
     return {
       text: item.trim(),
-      info: ""
+      info: "",
     };
   }
 
   if (item && typeof item === "object") {
     return {
       text: String(item.text || "").trim(),
-      info: String(item.info || "").trim()
+      info: String(item.info || "").trim(),
     };
   }
 
   return {
     text: "",
-    info: ""
+    info: "",
   };
 }
 
 function parseItemsText(itemsText) {
   return String(itemsText || "")
     .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .map(line => {
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
       const parts = line.split("|");
       const text = parts.shift().trim();
       const info = parts.join("|").trim();
 
       return {
         text,
-        info
+        info,
       };
     })
-    .filter(item => item.text.length > 0);
+    .filter((item) => item.text.length > 0);
 }
 
 function getRoundsList() {
@@ -142,7 +152,7 @@ function getRoundsList() {
         itemCount: round.items.length,
         played: gameState.playedRoundIds.includes(round.id),
         favorite: isRoundFavorite(round.id),
-        originalIndex: index
+        originalIndex: index,
       };
     })
     .sort((a, b) => {
@@ -188,10 +198,16 @@ function makeUniqueRoundFilename(title) {
 function getRoundFilenameById(roundId) {
   const id = String(roundId || "");
 
-  return getRoundFiles().find(filename => {
-    return filename.replace(/\.json$/, "") === id;
-  }) || null;
+  return (
+    getRoundFiles().find((filename) => {
+      return filename.replace(/\.json$/, "") === id;
+    }) || null
+  );
 }
+
+// =====================================
+// Data directory handling
+// =====================================
 
 function ensureDataDirectories() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -202,6 +218,10 @@ function ensureDataDirectories() {
     fs.mkdirSync(SAVES_DIR);
   }
 }
+
+// =====================================
+// Settings and hotkeys persistence
+// =====================================
 
 function getDefaultSettings() {
   return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -221,7 +241,7 @@ function sanitizeHotkeys(hotkeys) {
   const defaults = DEFAULT_SETTINGS.hotkeys;
   const cleanHotkeys = {};
 
-  Object.keys(defaults).forEach(actionId => {
+  Object.keys(defaults).forEach((actionId) => {
     if (hotkeys && Object.prototype.hasOwnProperty.call(hotkeys, actionId)) {
       cleanHotkeys[actionId] = normalizeHotkeyCode(hotkeys[actionId]);
     } else {
@@ -249,7 +269,7 @@ function loadSettings() {
     appSettings = {
       ...getDefaultSettings(),
       ...data,
-      hotkeys: sanitizeHotkeys(data.hotkeys || {})
+      hotkeys: sanitizeHotkeys(data.hotkeys || {}),
     };
   } catch (error) {
     console.error("Einstellungen konnten nicht geladen werden:", error);
@@ -260,12 +280,12 @@ function loadSettings() {
 function saveSettings() {
   ensureDataDirectories();
 
-  fs.writeFileSync(
-    SETTINGS_FILE,
-    JSON.stringify(appSettings, null, 2),
-    "utf8"
-  );
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(appSettings, null, 2), "utf8");
 }
+
+// =====================================
+// Round favorites persistence
+// =====================================
 
 function loadFavorites() {
   ensureDataDirectories();
@@ -294,7 +314,7 @@ function saveFavorites() {
   fs.writeFileSync(
     FAVORITES_FILE,
     JSON.stringify({ favoriteRoundIds }, null, 2),
-    "utf8"
+    "utf8",
   );
 }
 
@@ -304,7 +324,7 @@ function isRoundFavorite(roundId) {
 
 function toggleRoundFavorite(roundId) {
   if (isRoundFavorite(roundId)) {
-    favoriteRoundIds = favoriteRoundIds.filter(id => id !== roundId);
+    favoriteRoundIds = favoriteRoundIds.filter((id) => id !== roundId);
   } else {
     favoriteRoundIds.push(roundId);
   }
@@ -313,9 +333,13 @@ function toggleRoundFavorite(roundId) {
 }
 
 function removeRoundFromFavorites(roundId) {
-  favoriteRoundIds = favoriteRoundIds.filter(id => id !== roundId);
+  favoriteRoundIds = favoriteRoundIds.filter((id) => id !== roundId);
   saveFavorites();
 }
+
+// =====================================
+// Manual save games
+// =====================================
 
 function buildGameSaveData(saveName = "") {
   return {
@@ -331,34 +355,40 @@ function buildGameSaveData(saveName = "") {
     timer: {
       duration: gameState.timer.duration,
       remaining: gameState.timer.remaining,
-      running: false
+      running: false,
     },
     summary: {
-      currentRoundTitle: gameState.currentRound ? gameState.currentRound.title : "",
+      currentRoundTitle: gameState.currentRound
+        ? gameState.currentRound.title
+        : "",
       teamCount: gameState.teams.length,
-      teams: gameState.teams.map(team => ({
+      teams: gameState.teams.map((team) => ({
         id: team.id,
         name: team.name,
         score: team.score,
-        color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
+        color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
       })),
-      historyCount: Array.isArray(gameState.history) ? gameState.history.length : 0,
-      playedRoundCount: Array.isArray(gameState.playedRoundIds) ? gameState.playedRoundIds.length : 0
-    }
+      historyCount: Array.isArray(gameState.history)
+        ? gameState.history.length
+        : 0,
+      playedRoundCount: Array.isArray(gameState.playedRoundIds)
+        ? gameState.playedRoundIds.length
+        : 0,
+    },
   };
 }
 
 function applyGameSaveData(saveData) {
   gameState.teams = Array.isArray(saveData.teams) ? saveData.teams : [];
 
-  gameState.teams = gameState.teams.map(team => ({
+  gameState.teams = gameState.teams.map((team) => ({
     ...team,
-    color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
+    color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
   }));
 
   gameState.activeTeamId = saveData.activeTeamId || null;
 
-  if (!gameState.teams.some(team => team.id === gameState.activeTeamId)) {
+  if (!gameState.teams.some((team) => team.id === gameState.activeTeamId)) {
     gameState.activeTeamId = null;
   }
 
@@ -368,9 +398,7 @@ function applyGameSaveData(saveData) {
     ? saveData.playedRoundIds
     : [];
 
-  gameState.history = Array.isArray(saveData.history)
-    ? saveData.history
-    : [];
+  gameState.history = Array.isArray(saveData.history) ? saveData.history : [];
 
   gameState.answerCounter = saveData.answerCounter || null;
 
@@ -378,7 +406,7 @@ function applyGameSaveData(saveData) {
     gameState.timer = {
       duration: saveData.timer.duration || 300,
       remaining: saveData.timer.remaining || saveData.timer.duration || 300,
-      running: false
+      running: false,
     };
   }
 
@@ -429,17 +457,17 @@ function makeUniqueSaveFilename(name) {
 function getSaveGameFiles() {
   ensureDataDirectories();
 
-  return fs
-    .readdirSync(SAVES_DIR)
-    .filter(file => file.endsWith(".json"));
+  return fs.readdirSync(SAVES_DIR).filter((file) => file.endsWith(".json"));
 }
 
 function getSaveFilenameById(saveId) {
   const id = String(saveId || "");
 
-  return getSaveGameFiles().find(filename => {
-    return filename.replace(/\.json$/, "") === id;
-  }) || null;
+  return (
+    getSaveGameFiles().find((filename) => {
+      return filename.replace(/\.json$/, "") === id;
+    }) || null
+  );
 }
 
 function readSaveGameSummary(filename) {
@@ -455,26 +483,32 @@ function readSaveGameSummary(filename) {
     name: data.saveName || filename.replace(".json", ""),
     createdAt: data.createdAt || data.savedAt || "",
     savedAt: data.savedAt || data.createdAt || "",
-    currentRoundTitle: summary.currentRoundTitle || data.currentRoundId || "Keine Runde geladen",
-    teamCount: summary.teamCount ?? (Array.isArray(data.teams) ? data.teams.length : 0),
+    currentRoundTitle:
+      summary.currentRoundTitle || data.currentRoundId || "Keine Runde geladen",
+    teamCount:
+      summary.teamCount ?? (Array.isArray(data.teams) ? data.teams.length : 0),
     teams: Array.isArray(summary.teams)
       ? summary.teams
       : Array.isArray(data.teams)
-        ? data.teams.map(team => ({
+        ? data.teams.map((team) => ({
             id: team.id,
             name: team.name,
             score: team.score,
-            color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
+            color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
           }))
         : [],
-    historyCount: summary.historyCount ?? (Array.isArray(data.history) ? data.history.length : 0),
-    playedRoundCount: summary.playedRoundCount ?? (Array.isArray(data.playedRoundIds) ? data.playedRoundIds.length : 0)
+    historyCount:
+      summary.historyCount ??
+      (Array.isArray(data.history) ? data.history.length : 0),
+    playedRoundCount:
+      summary.playedRoundCount ??
+      (Array.isArray(data.playedRoundIds) ? data.playedRoundIds.length : 0),
   };
 }
 
 function getSaveGamesList() {
   return getSaveGameFiles()
-    .map(filename => {
+    .map((filename) => {
       try {
         return readSaveGameSummary(filename);
       } catch {
@@ -486,6 +520,10 @@ function getSaveGamesList() {
       return new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
     });
 }
+
+// =====================================
+// Autosave and game-state loading
+// =====================================
 
 function saveGameState() {
   ensureDataDirectories();
@@ -506,26 +544,24 @@ function loadGameState() {
 
     gameState.teams = Array.isArray(saveData.teams) ? saveData.teams : [];
 
-	gameState.teams = gameState.teams.map(team => ({
-	  ...team,
-	  color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
-	}));
+    gameState.teams = gameState.teams.map((team) => ({
+      ...team,
+      color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
+    }));
 
-	gameState.activeTeamId = saveData.activeTeamId || null;
-	sortTeamsById();
-	gameState.playedRoundIds = Array.isArray(saveData.playedRoundIds)
-		? saveData.playedRoundIds
-		: [];
-	gameState.history = Array.isArray(saveData.history)
-		? saveData.history
-		: [];
-	gameState.answerCounter = saveData.answerCounter || null;
+    gameState.activeTeamId = saveData.activeTeamId || null;
+    sortTeamsById();
+    gameState.playedRoundIds = Array.isArray(saveData.playedRoundIds)
+      ? saveData.playedRoundIds
+      : [];
+    gameState.history = Array.isArray(saveData.history) ? saveData.history : [];
+    gameState.answerCounter = saveData.answerCounter || null;
 
     if (saveData.timer) {
       gameState.timer = {
         duration: saveData.timer.duration || 300,
         remaining: saveData.timer.remaining || saveData.timer.duration || 300,
-        running: false
+        running: false,
       };
     }
 
@@ -560,14 +596,18 @@ function loadGameState() {
   }
 }
 
+// =====================================
+// State payloads for moderator and player views
+// =====================================
+
 function getPublicTeams() {
-  return gameState.teams.map(team => ({
+  return gameState.teams.map((team) => ({
     id: team.id,
     name: team.name,
     score: team.score,
     bid: team.bid,
     errors: team.errors,
-    color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id))
+    color: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
   }));
 }
 
@@ -575,24 +615,24 @@ function getPlayerState() {
   const round = gameState.currentRound;
 
   return {
-	teams: getPublicTeams(),
-	activeTeamId: gameState.activeTeamId,
-	timer: gameState.timer,
-	answerCounter: gameState.answerCounter,
-	currentRound: round
+    teams: getPublicTeams(),
+    activeTeamId: gameState.activeTeamId,
+    timer: gameState.timer,
+    answerCounter: gameState.answerCounter,
+    currentRound: round
       ? {
           id: round.id,
           title: round.title,
           subtitle: round.subtitle,
           itemCount: round.items.length,
           items: round.items.map((item, index) => ({
-			number: index + 1,
-			text: gameState.revealed[index] ? item.text : null,
-			info: item.info || "",
-			revealed: gameState.revealed[index] || false
-		  }))
+            number: index + 1,
+            text: gameState.revealed[index] ? item.text : null,
+            info: item.info || "",
+            revealed: gameState.revealed[index] || false,
+          })),
         }
-      : null
+      : null,
   };
 }
 
@@ -601,9 +641,13 @@ function getModeratorState() {
     ...gameState,
     rounds: getRoundsList(),
     saves: getSaveGamesList(),
-	settings: appSettings
+    settings: appSettings,
   };
 }
+
+// =====================================
+// Broadcast and reset helpers
+// =====================================
 
 function broadcastState() {
   io.to("moderators").emit("state:update", getModeratorState());
@@ -617,19 +661,19 @@ function persistAndBroadcast() {
 
 function resetGameState() {
   gameState = {
-  teams: [],
-  currentRound: null,
-  revealed: [],
-  activeTeamId: null,
-  playedRoundIds: [],
-  history: [],
-  answerCounter: null,
-  timer: {
-    duration: 300,
-    remaining: 300,
-    running: false
-  }
-};
+    teams: [],
+    currentRound: null,
+    revealed: [],
+    activeTeamId: null,
+    playedRoundIds: [],
+    history: [],
+    answerCounter: null,
+    timer: {
+      duration: 300,
+      remaining: 300,
+      running: false,
+    },
+  };
 
   nextTeamId = 1;
 
@@ -640,8 +684,12 @@ function resetGameState() {
   broadcastState();
 }
 
+// =====================================
+// Team helpers
+// =====================================
+
 function findTeam(teamId) {
-  return gameState.teams.find(team => team.id === teamId);
+  return gameState.teams.find((team) => team.id === teamId);
 }
 
 function getDefaultTeamColor(teamId) {
@@ -660,7 +708,7 @@ function normalizeTeamColor(color, fallbackColor) {
 }
 
 function getNextAvailableTeamId() {
-  const usedIds = gameState.teams.map(team => Number(team.id));
+  const usedIds = gameState.teams.map((team) => Number(team.id));
 
   let id = 1;
 
@@ -674,6 +722,10 @@ function getNextAvailableTeamId() {
 function sortTeamsById() {
   gameState.teams.sort((a, b) => Number(a.id) - Number(b.id));
 }
+
+// =====================================
+// Active team and round finish helpers
+// =====================================
 
 function getActiveTeam() {
   if (!gameState.activeTeamId) {
@@ -709,6 +761,10 @@ function markCurrentRoundAsPlayed() {
   }
 }
 
+// =====================================
+// Answer counter helpers
+// =====================================
+
 function getValidBidFromTeam(team) {
   if (!team) {
     return null;
@@ -736,7 +792,7 @@ function startAnswerCounterForTeam(team) {
     teamName: team.name,
     target: getValidBidFromTeam(team),
     count: 0,
-    countedItemIndexes: []
+    countedItemIndexes: [],
   };
 }
 
@@ -763,7 +819,8 @@ function countAnswerReveal(index) {
   }
 
   gameState.answerCounter.countedItemIndexes.push(index);
-  gameState.answerCounter.count = gameState.answerCounter.countedItemIndexes.length;
+  gameState.answerCounter.count =
+    gameState.answerCounter.countedItemIndexes.length;
 }
 
 function uncountAnswerReveal(index) {
@@ -776,9 +833,12 @@ function uncountAnswerReveal(index) {
   }
 
   gameState.answerCounter.countedItemIndexes =
-    gameState.answerCounter.countedItemIndexes.filter(itemIndex => itemIndex !== index);
+    gameState.answerCounter.countedItemIndexes.filter(
+      (itemIndex) => itemIndex !== index,
+    );
 
-  gameState.answerCounter.count = gameState.answerCounter.countedItemIndexes.length;
+  gameState.answerCounter.count =
+    gameState.answerCounter.countedItemIndexes.length;
 }
 
 function lockAnswerCounter() {
@@ -796,10 +856,10 @@ function clearAnswerCounterIfUnlocked() {
 }
 
 function resetRoundTeamState() {
-  gameState.teams = gameState.teams.map(team => ({
+  gameState.teams = gameState.teams.map((team) => ({
     ...team,
     bid: "",
-    errors: 0
+    errors: 0,
   }));
 
   gameState.activeTeamId = null;
@@ -808,17 +868,21 @@ function resetRoundTeamState() {
   lockAnswerCounter();
 }
 
+// =====================================
+// History and score helpers
+// =====================================
+
 function addHistoryEntry(entry) {
   const fullEntry = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     createdAt: new Date().toISOString(),
     ...entry,
-    scoresAfter: gameState.teams.map(team => ({
-	  teamId: team.id,
-	  teamName: team.name,
-	  teamColor: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
-	  score: team.score
-	}))
+    scoresAfter: gameState.teams.map((team) => ({
+      teamId: team.id,
+      teamName: team.name,
+      teamColor: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
+      score: team.score,
+    })),
   };
 
   gameState.history.unshift(fullEntry);
@@ -848,6 +912,10 @@ function parseScoreInput(currentScore, input) {
   return number;
 }
 
+// =====================================
+// Timer loop
+// =====================================
+
 function startTimerInterval() {
   if (timerInterval) {
     clearInterval(timerInterval);
@@ -867,6 +935,10 @@ function startTimerInterval() {
     broadcastState();
   }, 1000);
 }
+
+// =====================================
+// HTTP routes
+// =====================================
 
 app.get("/", (req, res) => {
   res.redirect("/moderator.html");
@@ -892,6 +964,10 @@ app.get("/api/rounds/:id", (req, res) => {
   }
 });
 
+// =====================================
+// Socket.IO realtime events
+// =====================================
+
 io.on("connection", (socket) => {
   console.log("Ein Fenster ist verbunden:", socket.id);
 
@@ -907,23 +983,25 @@ io.on("connection", (socket) => {
     console.log("Spieler verbunden:", socket.id);
   });
 
+  // ----- Round management -----
+
   socket.on("rounds:refresh", () => {
-  broadcastState();
+    broadcastState();
   });
 
   socket.on("round:create", ({ title, subtitle, source, notes, itemsText }) => {
     try {
       const cleanTitle = String(title || "").trim();
-	  const cleanSubtitle = String(subtitle || "").trim();
-	  const cleanSource = String(source || "").trim();
-	  const cleanNotes = String(notes || "").trim();
+      const cleanSubtitle = String(subtitle || "").trim();
+      const cleanSource = String(source || "").trim();
+      const cleanNotes = String(notes || "").trim();
 
-	  const items = parseItemsText(itemsText);
+      const items = parseItemsText(itemsText);
 
       if (!cleanTitle) {
         socket.emit("round:createResult", {
           ok: false,
-          error: "Die Runde braucht einen Titel."
+          error: "Die Runde braucht einen Titel.",
         });
         return;
       }
@@ -931,7 +1009,7 @@ io.on("connection", (socket) => {
       if (items.length === 0) {
         socket.emit("round:createResult", {
           ok: false,
-          error: "Die Runde braucht mindestens einen Listeneintrag."
+          error: "Die Runde braucht mindestens einen Listeneintrag.",
         });
         return;
       }
@@ -939,23 +1017,23 @@ io.on("connection", (socket) => {
       const filename = makeUniqueRoundFilename(cleanTitle);
 
       const roundData = {
-		title: cleanTitle,
-		subtitle: cleanSubtitle || `Top ${items.length}`,
-		source: cleanSource,
-		notes: cleanNotes,
-		items
-	  };
+        title: cleanTitle,
+        subtitle: cleanSubtitle || `Top ${items.length}`,
+        source: cleanSource,
+        notes: cleanNotes,
+        items,
+      };
 
       fs.writeFileSync(
         path.join(ROUNDS_DIR, filename),
         JSON.stringify(roundData, null, 2),
-        "utf8"
+        "utf8",
       );
 
       socket.emit("round:createResult", {
         ok: true,
         filename,
-        itemCount: items.length
+        itemCount: items.length,
       });
 
       broadcastState();
@@ -964,362 +1042,373 @@ io.on("connection", (socket) => {
 
       socket.emit("round:createResult", {
         ok: false,
-        error: "Die Runde konnte nicht gespeichert werden."
+        error: "Die Runde konnte nicht gespeichert werden.",
       });
     }
   });
-  
-socket.on("settings:updateHotkeys", (hotkeys) => {
-  appSettings.hotkeys = sanitizeHotkeys(hotkeys || {});
-  saveSettings();
-  broadcastState();
-});
 
-socket.on("settings:resetHotkeys", () => {
-  appSettings.hotkeys = getDefaultSettings().hotkeys;
-  saveSettings();
-  broadcastState();
-});
-  
-socket.on("saves:refresh", () => {
-  broadcastState();
-});
+  // ----- Settings -----
 
-socket.on("save:create", ({ name }) => {
-  try {
-    const cleanName = String(name || "").trim();
+  socket.on("settings:updateHotkeys", (hotkeys) => {
+    appSettings.hotkeys = sanitizeHotkeys(hotkeys || {});
+    saveSettings();
+    broadcastState();
+  });
 
-    if (!cleanName) {
+  socket.on("settings:resetHotkeys", () => {
+    appSettings.hotkeys = getDefaultSettings().hotkeys;
+    saveSettings();
+    broadcastState();
+  });
+
+  // ----- Manual save games -----
+
+  socket.on("saves:refresh", () => {
+    broadcastState();
+  });
+
+  socket.on("save:create", ({ name }) => {
+    try {
+      const cleanName = String(name || "").trim();
+
+      if (!cleanName) {
+        socket.emit("save:createResult", {
+          ok: false,
+          error: "Der Spielstand braucht einen Namen.",
+        });
+        return;
+      }
+
+      ensureDataDirectories();
+
+      const filename = makeUniqueSaveFilename(cleanName);
+      const now = new Date().toISOString();
+
+      const saveData = {
+        ...buildGameSaveData(cleanName),
+        createdAt: now,
+        savedAt: now,
+      };
+
+      fs.writeFileSync(
+        path.join(SAVES_DIR, filename),
+        JSON.stringify(saveData, null, 2),
+        "utf8",
+      );
+
+      socket.emit("save:createResult", {
+        ok: true,
+        filename,
+        name: cleanName,
+      });
+
+      broadcastState();
+    } catch (error) {
+      console.error("Spielstand konnte nicht gespeichert werden:", error);
+
       socket.emit("save:createResult", {
         ok: false,
-        error: "Der Spielstand braucht einen Namen."
+        error: "Der Spielstand konnte nicht gespeichert werden.",
       });
-      return;
     }
+  });
 
-    ensureDataDirectories();
+  socket.on("save:load", (saveId) => {
+    try {
+      const filename = getSaveFilenameById(saveId);
 
-    const filename = makeUniqueSaveFilename(cleanName);
-    const now = new Date().toISOString();
+      if (!filename) {
+        socket.emit("save:loadResult", {
+          ok: false,
+          error: "Spielstand wurde nicht gefunden.",
+        });
+        return;
+      }
 
-    const saveData = {
-      ...buildGameSaveData(cleanName),
-      createdAt: now,
-      savedAt: now
-    };
+      const rawData = fs.readFileSync(path.join(SAVES_DIR, filename), "utf8");
+      const saveData = JSON.parse(rawData);
 
-    fs.writeFileSync(
-      path.join(SAVES_DIR, filename),
-      JSON.stringify(saveData, null, 2),
-      "utf8"
-    );
+      applyGameSaveData(saveData);
+      saveGameState();
 
-    socket.emit("save:createResult", {
-      ok: true,
-      filename,
-      name: cleanName
-    });
+      socket.emit("save:loadResult", {
+        ok: true,
+        name: saveData.saveName || filename,
+      });
 
-    broadcastState();
-  } catch (error) {
-    console.error("Spielstand konnte nicht gespeichert werden:", error);
+      broadcastState();
+    } catch (error) {
+      console.error("Spielstand konnte nicht geladen werden:", error);
 
-    socket.emit("save:createResult", {
-      ok: false,
-      error: "Der Spielstand konnte nicht gespeichert werden."
-    });
-  }
-});
-
-socket.on("save:load", (saveId) => {
-  try {
-    const filename = getSaveFilenameById(saveId);
-
-    if (!filename) {
       socket.emit("save:loadResult", {
         ok: false,
-        error: "Spielstand wurde nicht gefunden."
+        error: "Der Spielstand konnte nicht geladen werden.",
       });
-      return;
     }
+  });
 
-    const rawData = fs.readFileSync(path.join(SAVES_DIR, filename), "utf8");
-    const saveData = JSON.parse(rawData);
+  socket.on("save:delete", (saveId) => {
+    try {
+      const filename = getSaveFilenameById(saveId);
 
-    applyGameSaveData(saveData);
-    saveGameState();
+      if (!filename) {
+        socket.emit("save:deleteResult", {
+          ok: false,
+          error: "Spielstand wurde nicht gefunden.",
+        });
+        return;
+      }
 
-    socket.emit("save:loadResult", {
-      ok: true,
-      name: saveData.saveName || filename
-    });
+      fs.unlinkSync(path.join(SAVES_DIR, filename));
 
-    broadcastState();
-  } catch (error) {
-    console.error("Spielstand konnte nicht geladen werden:", error);
+      socket.emit("save:deleteResult", {
+        ok: true,
+        filename,
+      });
 
-    socket.emit("save:loadResult", {
-      ok: false,
-      error: "Der Spielstand konnte nicht geladen werden."
-    });
-  }
-});
+      broadcastState();
+    } catch (error) {
+      console.error("Spielstand konnte nicht gelöscht werden:", error);
 
-socket.on("save:delete", (saveId) => {
-  try {
-    const filename = getSaveFilenameById(saveId);
-
-    if (!filename) {
       socket.emit("save:deleteResult", {
         ok: false,
-        error: "Spielstand wurde nicht gefunden."
+        error: "Der Spielstand konnte nicht gelöscht werden.",
       });
-      return;
     }
+  });
 
-    fs.unlinkSync(path.join(SAVES_DIR, filename));
+  socket.on("round:duplicate", (roundId) => {
+    try {
+      const sourceFilename = getRoundFilenameById(roundId);
 
-    socket.emit("save:deleteResult", {
-      ok: true,
-      filename
-    });
+      if (!sourceFilename) {
+        socket.emit("round:duplicateResult", {
+          ok: false,
+          error: "Runde wurde nicht gefunden.",
+        });
+        return;
+      }
 
-    broadcastState();
-  } catch (error) {
-    console.error("Spielstand konnte nicht gelöscht werden:", error);
+      const sourceRound = readRoundFile(sourceFilename);
 
-    socket.emit("save:deleteResult", {
-      ok: false,
-      error: "Der Spielstand konnte nicht gelöscht werden."
-    });
-  }
-});
-  
-socket.on("round:duplicate", (roundId) => {
-  try {
-    const sourceFilename = getRoundFilenameById(roundId);
+      const copyTitle = `${sourceRound.title} - Kopie`;
+      const copyFilename = makeUniqueRoundFilename(copyTitle);
 
-    if (!sourceFilename) {
+      const copyData = {
+        title: copyTitle,
+        subtitle: sourceRound.subtitle || `Top ${sourceRound.items.length}`,
+        source: sourceRound.source || "",
+        notes: sourceRound.notes || "",
+        items: sourceRound.items,
+      };
+
+      fs.writeFileSync(
+        path.join(ROUNDS_DIR, copyFilename),
+        JSON.stringify(copyData, null, 2),
+        "utf8",
+      );
+
+      socket.emit("round:duplicateResult", {
+        ok: true,
+        filename: copyFilename,
+        title: copyTitle,
+        itemCount: sourceRound.items.length,
+      });
+
+      broadcastState();
+    } catch (error) {
+      console.error("Runde konnte nicht dupliziert werden:", error);
+
       socket.emit("round:duplicateResult", {
         ok: false,
-        error: "Runde wurde nicht gefunden."
+        error: "Die Runde konnte nicht dupliziert werden.",
       });
-      return;
     }
+  });
 
-    const sourceRound = readRoundFile(sourceFilename);
+  socket.on("round:toggleFavorite", (roundId) => {
+    try {
+      const filename = getRoundFilenameById(roundId);
 
-    const copyTitle = `${sourceRound.title} - Kopie`;
-    const copyFilename = makeUniqueRoundFilename(copyTitle);
+      if (!filename) return;
 
-    const copyData = {
-		title: copyTitle,
-		subtitle: sourceRound.subtitle || `Top ${sourceRound.items.length}`,
-		source: sourceRound.source || "",
-		notes: sourceRound.notes || "",
-		items: sourceRound.items
-	};
-
-    fs.writeFileSync(
-      path.join(ROUNDS_DIR, copyFilename),
-      JSON.stringify(copyData, null, 2),
-      "utf8"
-    );
-
-    socket.emit("round:duplicateResult", {
-      ok: true,
-      filename: copyFilename,
-      title: copyTitle,
-      itemCount: sourceRound.items.length
-    });
-
-    broadcastState();
-  } catch (error) {
-    console.error("Runde konnte nicht dupliziert werden:", error);
-
-    socket.emit("round:duplicateResult", {
-      ok: false,
-      error: "Die Runde konnte nicht dupliziert werden."
-    });
-  }
-});
-
-socket.on("round:toggleFavorite", (roundId) => {
-  try {
-    const filename = getRoundFilenameById(roundId);
-
-    if (!filename) return;
-
-    toggleRoundFavorite(roundId);
-    broadcastState();
-  } catch (error) {
-    console.error("Favorit konnte nicht geändert werden:", error);
-  }
-});
-
-socket.on("round:togglePlayed", (roundId) => {
-  try {
-    const filename = getRoundFilenameById(roundId);
-
-    if (!filename) return;
-
-    if (gameState.playedRoundIds.includes(roundId)) {
-      gameState.playedRoundIds = gameState.playedRoundIds.filter(id => id !== roundId);
-    } else {
-      gameState.playedRoundIds.push(roundId);
+      toggleRoundFavorite(roundId);
+      broadcastState();
+    } catch (error) {
+      console.error("Favorit konnte nicht geändert werden:", error);
     }
+  });
 
-    persistAndBroadcast();
-  } catch (error) {
-    console.error("Gespielt-Markierung konnte nicht geändert werden:", error);
-  }
-});
+  socket.on("round:togglePlayed", (roundId) => {
+    try {
+      const filename = getRoundFilenameById(roundId);
 
-socket.on("round:getForEdit", (roundId) => {
-  try {
-    const filename = getRoundFilenameById(roundId);
+      if (!filename) return;
 
-    if (!filename) {
+      if (gameState.playedRoundIds.includes(roundId)) {
+        gameState.playedRoundIds = gameState.playedRoundIds.filter(
+          (id) => id !== roundId,
+        );
+      } else {
+        gameState.playedRoundIds.push(roundId);
+      }
+
+      persistAndBroadcast();
+    } catch (error) {
+      console.error("Gespielt-Markierung konnte nicht geändert werden:", error);
+    }
+  });
+
+  socket.on("round:getForEdit", (roundId) => {
+    try {
+      const filename = getRoundFilenameById(roundId);
+
+      if (!filename) {
+        socket.emit("round:editData", {
+          ok: false,
+          error: "Runde wurde nicht gefunden.",
+        });
+        return;
+      }
+
+      const round = readRoundFile(filename);
+
+      socket.emit("round:editData", {
+        ok: true,
+        round,
+      });
+    } catch (error) {
+      console.error("Runde konnte nicht zum Bearbeiten geladen werden:", error);
+
       socket.emit("round:editData", {
         ok: false,
-        error: "Runde wurde nicht gefunden."
+        error: "Runde konnte nicht geladen werden.",
       });
-      return;
     }
+  });
 
-    const round = readRoundFile(filename);
+  socket.on(
+    "round:update",
+    ({ roundId, title, subtitle, source, notes, itemsText }) => {
+      try {
+        const filename = getRoundFilenameById(roundId);
 
-    socket.emit("round:editData", {
-      ok: true,
-      round
-    });
-  } catch (error) {
-    console.error("Runde konnte nicht zum Bearbeiten geladen werden:", error);
+        if (!filename) {
+          socket.emit("round:updateResult", {
+            ok: false,
+            error: "Runde wurde nicht gefunden.",
+          });
+          return;
+        }
 
-    socket.emit("round:editData", {
-      ok: false,
-      error: "Runde konnte nicht geladen werden."
-    });
-  }
-});
+        const cleanTitle = String(title || "").trim();
+        const cleanSubtitle = String(subtitle || "").trim();
+        const cleanSource = String(source || "").trim();
+        const cleanNotes = String(notes || "").trim();
 
-socket.on("round:update", ({ roundId, title, subtitle, source, notes, itemsText }) => {
-  try {
-    const filename = getRoundFilenameById(roundId);
+        const items = parseItemsText(itemsText);
 
-    if (!filename) {
-      socket.emit("round:updateResult", {
-        ok: false,
-        error: "Runde wurde nicht gefunden."
+        if (!cleanTitle) {
+          socket.emit("round:updateResult", {
+            ok: false,
+            error: "Die Runde braucht einen Titel.",
+          });
+          return;
+        }
+
+        if (items.length === 0) {
+          socket.emit("round:updateResult", {
+            ok: false,
+            error: "Die Runde braucht mindestens einen Listeneintrag.",
+          });
+          return;
+        }
+
+        const roundData = {
+          title: cleanTitle,
+          subtitle: cleanSubtitle || `Top ${items.length}`,
+          source: cleanSource,
+          notes: cleanNotes,
+          items,
+        };
+
+        fs.writeFileSync(
+          path.join(ROUNDS_DIR, filename),
+          JSON.stringify(roundData, null, 2),
+          "utf8",
+        );
+
+        if (gameState.currentRound && gameState.currentRound.id === roundId) {
+          const updatedRound = readRoundFile(filename);
+          gameState.currentRound = updatedRound;
+          gameState.revealed = updatedRound.items.map(() => false);
+        }
+
+        socket.emit("round:updateResult", {
+          ok: true,
+          filename,
+          itemCount: items.length,
+        });
+
+        persistAndBroadcast();
+      } catch (error) {
+        console.error("Runde konnte nicht bearbeitet werden:", error);
+
+        socket.emit("round:updateResult", {
+          ok: false,
+          error: "Die Runde konnte nicht gespeichert werden.",
+        });
+      }
+    },
+  );
+
+  socket.on("round:delete", (roundId) => {
+    try {
+      const filename = getRoundFilenameById(roundId);
+
+      if (!filename) {
+        socket.emit("round:deleteResult", {
+          ok: false,
+          error: "Runde wurde nicht gefunden.",
+        });
+        return;
+      }
+
+      fs.unlinkSync(path.join(ROUNDS_DIR, filename));
+
+      gameState.playedRoundIds = gameState.playedRoundIds.filter(
+        (id) => id !== roundId,
+      );
+      removeRoundFromFavorites(roundId);
+
+      if (gameState.currentRound && gameState.currentRound.id === roundId) {
+        gameState.currentRound = null;
+        gameState.revealed = [];
+        gameState.activeTeamId = null;
+        gameState.answerCounter = null;
+
+        gameState.teams = gameState.teams.map((team) => ({
+          ...team,
+          bid: "",
+          errors: 0,
+        }));
+      }
+
+      socket.emit("round:deleteResult", {
+        ok: true,
+        filename,
       });
-      return;
-    }
 
-    const cleanTitle = String(title || "").trim();
-	const cleanSubtitle = String(subtitle || "").trim();
-	const cleanSource = String(source || "").trim();
-	const cleanNotes = String(notes || "").trim();
+      persistAndBroadcast();
+    } catch (error) {
+      console.error("Runde konnte nicht gelöscht werden:", error);
 
-	const items = parseItemsText(itemsText);
-
-    if (!cleanTitle) {
-      socket.emit("round:updateResult", {
-        ok: false,
-        error: "Die Runde braucht einen Titel."
-      });
-      return;
-    }
-
-    if (items.length === 0) {
-      socket.emit("round:updateResult", {
-        ok: false,
-        error: "Die Runde braucht mindestens einen Listeneintrag."
-      });
-      return;
-    }
-
-    const roundData = {
-		title: cleanTitle,
-		subtitle: cleanSubtitle || `Top ${items.length}`,
-		source: cleanSource,
-		notes: cleanNotes,
-		items
-	};
-
-    fs.writeFileSync(
-      path.join(ROUNDS_DIR, filename),
-      JSON.stringify(roundData, null, 2),
-      "utf8"
-    );
-
-    if (gameState.currentRound && gameState.currentRound.id === roundId) {
-      const updatedRound = readRoundFile(filename);
-      gameState.currentRound = updatedRound;
-      gameState.revealed = updatedRound.items.map(() => false);
-    }
-
-    socket.emit("round:updateResult", {
-      ok: true,
-      filename,
-      itemCount: items.length
-    });
-
-    persistAndBroadcast();
-  } catch (error) {
-    console.error("Runde konnte nicht bearbeitet werden:", error);
-
-    socket.emit("round:updateResult", {
-      ok: false,
-      error: "Die Runde konnte nicht gespeichert werden."
-    });
-  }
-});
-
-socket.on("round:delete", (roundId) => {
-  try {
-    const filename = getRoundFilenameById(roundId);
-
-    if (!filename) {
       socket.emit("round:deleteResult", {
         ok: false,
-        error: "Runde wurde nicht gefunden."
+        error: "Die Runde konnte nicht gelöscht werden.",
       });
-      return;
     }
-
-    fs.unlinkSync(path.join(ROUNDS_DIR, filename));
-	
-	gameState.playedRoundIds = gameState.playedRoundIds.filter(id => id !== roundId);
-	removeRoundFromFavorites(roundId);
-
-    if (gameState.currentRound && gameState.currentRound.id === roundId) {
-      gameState.currentRound = null;
-      gameState.revealed = [];
-      gameState.activeTeamId = null;
-	  gameState.answerCounter = null;
-
-      gameState.teams = gameState.teams.map(team => ({
-        ...team,
-        bid: "",
-        errors: 0
-      }));
-    }
-
-    socket.emit("round:deleteResult", {
-      ok: true,
-      filename
-    });
-
-    persistAndBroadcast();
-  } catch (error) {
-    console.error("Runde konnte nicht gelöscht werden:", error);
-
-    socket.emit("round:deleteResult", {
-      ok: false,
-      error: "Die Runde konnte nicht gelöscht werden."
-    });
-  }
-});
+  });
 
   socket.on("round:load", (roundId) => {
     try {
@@ -1328,14 +1417,14 @@ socket.on("round:delete", (roundId) => {
       gameState.currentRound = round;
       gameState.revealed = round.items.map(() => false);
 
-      gameState.teams = gameState.teams.map(team => ({
+      gameState.teams = gameState.teams.map((team) => ({
         ...team,
         bid: "",
-        errors: 0
+        errors: 0,
       }));
 
       gameState.activeTeamId = null;
-	  gameState.answerCounter = null;
+      gameState.answerCounter = null;
 
       persistAndBroadcast();
     } catch (error) {
@@ -1350,68 +1439,70 @@ socket.on("round:delete", (roundId) => {
 
     const wasRevealed = gameState.revealed[index] === true;
 
-	gameState.revealed[index] = !wasRevealed;
+    gameState.revealed[index] = !wasRevealed;
 
-	if (!wasRevealed && gameState.revealed[index]) {
-		countAnswerReveal(index);
-	}
+    if (!wasRevealed && gameState.revealed[index]) {
+      countAnswerReveal(index);
+    }
 
-	if (wasRevealed && !gameState.revealed[index]) {
-		uncountAnswerReveal(index);
-	}
+    if (wasRevealed && !gameState.revealed[index]) {
+      uncountAnswerReveal(index);
+    }
 
-	persistAndBroadcast();
+    persistAndBroadcast();
   });
 
   socket.on("round:hideAll", () => {
     if (!gameState.currentRound) return;
 
-    const previousRevealed = gameState.revealed.map(value => value === true);
+    const previousRevealed = gameState.revealed.map((value) => value === true);
 
-	gameState.revealed = gameState.currentRound.items.map(() => false);
+    gameState.revealed = gameState.currentRound.items.map(() => false);
 
-	previousRevealed.forEach((wasRevealed, index) => {
-	if (wasRevealed) {
-		uncountAnswerReveal(index);
-	}
-	});
+    previousRevealed.forEach((wasRevealed, index) => {
+      if (wasRevealed) {
+        uncountAnswerReveal(index);
+      }
+    });
 
-	persistAndBroadcast();
+    persistAndBroadcast();
   });
 
   socket.on("round:revealAll", () => {
     if (!gameState.currentRound) return;
 
-    const previousRevealed = gameState.revealed.map(value => value === true);
+    const previousRevealed = gameState.revealed.map((value) => value === true);
 
-	gameState.revealed = gameState.currentRound.items.map(() => true);
+    gameState.revealed = gameState.currentRound.items.map(() => true);
 
-	previousRevealed.forEach((wasRevealed, index) => {
-		if (!wasRevealed) {
-			countAnswerReveal(index);
-		}
-	});
+    previousRevealed.forEach((wasRevealed, index) => {
+      if (!wasRevealed) {
+        countAnswerReveal(index);
+      }
+    });
 
-	persistAndBroadcast();
+    persistAndBroadcast();
   });
 
+  // ----- Teams -----
+
   socket.on("team:add", () => {
-	const teamId = getNextAvailableTeamId();
-	
-	const team = {
-	  id: teamId,
-	  name: `Team ${teamId}`,
-	  players: "",
-	  color: getDefaultTeamColor(teamId),
-	  score: 0,
-	  bid: "",
-	  errors: 0
-	};
+    const teamId = getNextAvailableTeamId();
 
-  gameState.teams.push(team);
-  sortTeamsById();
+    const team = {
+      id: teamId,
+      name: `Team ${teamId}`,
+      players: "",
+      color: getDefaultTeamColor(teamId),
+      score: 0,
+      bid: "",
+      errors: 0,
+    };
 
-  persistAndBroadcast();
+    gameState.teams.push(team);
+    sortTeamsById();
+
+    persistAndBroadcast();
   });
 
   socket.on("team:update", ({ teamId, name, players, color }) => {
@@ -1419,38 +1510,41 @@ socket.on("round:delete", (roundId) => {
     if (!team) return;
 
     if (typeof name === "string") {
-	  team.name = name.trim() || "Unbenanntes Team";
-	}
+      team.name = name.trim() || "Unbenanntes Team";
+    }
 
-	if (typeof players === "string") {
+    if (typeof players === "string") {
       team.players = players;
-	}
+    }
 
-	if (typeof color === "string") {
-      team.color = normalizeTeamColor(color, team.color || getDefaultTeamColor(team.id));
-	}
+    if (typeof color === "string") {
+      team.color = normalizeTeamColor(
+        color,
+        team.color || getDefaultTeamColor(team.id),
+      );
+    }
 
-	persistAndBroadcast();
+    persistAndBroadcast();
   });
 
   socket.on("team:remove", (teamId) => {
-	gameState.teams = gameState.teams.filter(team => team.id !== teamId);
+    gameState.teams = gameState.teams.filter((team) => team.id !== teamId);
 
-	if (gameState.activeTeamId === teamId) {
-		gameState.activeTeamId = null;
-		}
+    if (gameState.activeTeamId === teamId) {
+      gameState.activeTeamId = null;
+    }
 
-	if (
-		gameState.answerCounter &&
-		gameState.answerCounter.teamId === teamId &&
-		!gameState.answerCounter.locked
-	) {
-		gameState.answerCounter = null;
-	}
+    if (
+      gameState.answerCounter &&
+      gameState.answerCounter.teamId === teamId &&
+      !gameState.answerCounter.locked
+    ) {
+      gameState.answerCounter = null;
+    }
 
-	sortTeamsById();
+    sortTeamsById();
 
-	persistAndBroadcast();
+    persistAndBroadcast();
   });
 
   socket.on("team:scoreInput", ({ teamId, input }) => {
@@ -1473,7 +1567,7 @@ socket.on("round:delete", (roundId) => {
       team.bid = parseInt(text, 10);
     }
 
-	updateAnswerCounterTarget(team);
+    updateAnswerCounterTarget(team);
     persistAndBroadcast();
   });
 
@@ -1486,208 +1580,229 @@ socket.on("round:delete", (roundId) => {
 
     persistAndBroadcast();
   });
-  
+
   socket.on("activeTeam:errorDelta", (delta) => {
-	const activeTeam = getActiveTeam();
+    const activeTeam = getActiveTeam();
 
-	if (!activeTeam) {
-		return;
-	}
+    if (!activeTeam) {
+      return;
+    }
 
-	const change = Number(delta);
+    const change = Number(delta);
 
-	if (!Number.isFinite(change)) {
-		return;
-	}
+    if (!Number.isFinite(change)) {
+      return;
+    }
 
-	const currentErrors = parseInt(activeTeam.errors, 10) || 0;
-	const nextErrors = Math.max(0, Math.min(3, currentErrors + change));
+    const currentErrors = parseInt(activeTeam.errors, 10) || 0;
+    const nextErrors = Math.max(0, Math.min(3, currentErrors + change));
 
-	activeTeam.errors = nextErrors;
+    activeTeam.errors = nextErrors;
 
-	persistAndBroadcast();
-	});
+    persistAndBroadcast();
+  });
 
   socket.on("team:setActive", (teamId) => {
-	const team = findTeam(teamId);
+    const team = findTeam(teamId);
 
-	if (!team) {
-		gameState.activeTeamId = null;
-		gameState.answerCounter = null;
-	} else {
-		gameState.activeTeamId = teamId;
-		startAnswerCounterForTeam(team);
-	}
+    if (!team) {
+      gameState.activeTeamId = null;
+      gameState.answerCounter = null;
+    } else {
+      gameState.activeTeamId = teamId;
+      startAnswerCounterForTeam(team);
+    }
 
-	persistAndBroadcast();
-	});
+    persistAndBroadcast();
+  });
 
   socket.on("team:clearActive", () => {
-	gameState.activeTeamId = null;
-	clearAnswerCounterIfUnlocked();
-	persistAndBroadcast();
+    gameState.activeTeamId = null;
+    clearAnswerCounterIfUnlocked();
+    persistAndBroadcast();
   });
+
+  // ----- Round finish automation -----
 
   socket.on("round:finishWin", () => {
-  try {
-    if (!gameState.currentRound) {
+    try {
+      if (!gameState.currentRound) {
+        socket.emit("round:finishResult", {
+          ok: false,
+          error: "Es ist keine Runde geladen.",
+        });
+        return;
+      }
+
+      const activeTeam = getActiveTeam();
+      const bid = getActiveBidNumber();
+
+      if (!activeTeam) {
+        socket.emit("round:finishResult", {
+          ok: false,
+          error: "Es ist kein aktives Team gesetzt.",
+        });
+        return;
+      }
+
+      if (bid === null) {
+        socket.emit("round:finishResult", {
+          ok: false,
+          error: "Das aktive Team braucht ein gültiges Gebot.",
+        });
+        return;
+      }
+
+      activeTeam.score += bid;
+
+      const teamName = activeTeam.name;
+      const roundTitle = gameState.currentRound.title;
+
+      addHistoryEntry({
+        type: "win",
+        roundId: gameState.currentRound.id,
+        roundTitle,
+        activeTeamId: activeTeam.id,
+        activeTeamName: teamName,
+        bid,
+        awardedPoints: [
+          {
+            teamId: activeTeam.id,
+            teamName,
+            teamColor: normalizeTeamColor(
+              activeTeam.color,
+              getDefaultTeamColor(activeTeam.id),
+            ),
+            points: bid,
+          },
+        ],
+      });
+
+      markCurrentRoundAsPlayed();
+      resetRoundTeamState();
+
+      persistAndBroadcast();
+
+      socket.emit("round:finishResult", {
+        ok: true,
+        message: `Runde abgeschlossen: ${roundTitle}\n${teamName} erhält +${bid} Punkte.`,
+      });
+    } catch (error) {
+      console.error(
+        "Runde konnte nicht als gewonnen abgeschlossen werden:",
+        error,
+      );
+
       socket.emit("round:finishResult", {
         ok: false,
-        error: "Es ist keine Runde geladen."
+        error: "Die Runde konnte nicht abgeschlossen werden.",
       });
-      return;
     }
-
-    const activeTeam = getActiveTeam();
-    const bid = getActiveBidNumber();
-
-    if (!activeTeam) {
-      socket.emit("round:finishResult", {
-        ok: false,
-        error: "Es ist kein aktives Team gesetzt."
-      });
-      return;
-    }
-
-    if (bid === null) {
-      socket.emit("round:finishResult", {
-        ok: false,
-        error: "Das aktive Team braucht ein gültiges Gebot."
-      });
-      return;
-    }
-
-    activeTeam.score += bid;
-
-	const teamName = activeTeam.name;
-	const roundTitle = gameState.currentRound.title;
-
-	addHistoryEntry({
-	  type: "win",
-	  roundId: gameState.currentRound.id,
-	  roundTitle,
-	  activeTeamId: activeTeam.id,
-	  activeTeamName: teamName,
-	  bid,
-	  awardedPoints: [
-		{
-		  teamId: activeTeam.id,
-		  teamName,
-		  teamColor: normalizeTeamColor(activeTeam.color, getDefaultTeamColor(activeTeam.id)),
-		  points: bid
-		}
-	  ]
-	});
-
-	markCurrentRoundAsPlayed();
-	resetRoundTeamState();
-
-    persistAndBroadcast();
-
-    socket.emit("round:finishResult", {
-      ok: true,
-      message: `Runde abgeschlossen: ${roundTitle}\n${teamName} erhält +${bid} Punkte.`
-    });
-  } catch (error) {
-    console.error("Runde konnte nicht als gewonnen abgeschlossen werden:", error);
-
-    socket.emit("round:finishResult", {
-      ok: false,
-      error: "Die Runde konnte nicht abgeschlossen werden."
-    });
-  }
-});
+  });
 
   socket.on("round:finishLoss", () => {
-  try {
-    if (!gameState.currentRound) {
+    try {
+      if (!gameState.currentRound) {
+        socket.emit("round:finishResult", {
+          ok: false,
+          error: "Es ist keine Runde geladen.",
+        });
+        return;
+      }
+
+      const activeTeam = getActiveTeam();
+      const bid = getActiveBidNumber();
+
+      if (!activeTeam) {
+        socket.emit("round:finishResult", {
+          ok: false,
+          error: "Es ist kein aktives Team gesetzt.",
+        });
+        return;
+      }
+
+      if (bid === null) {
+        socket.emit("round:finishResult", {
+          ok: false,
+          error: "Das aktive Team braucht ein gültiges Gebot.",
+        });
+        return;
+      }
+
+      const otherTeams = gameState.teams.filter(
+        (team) => team.id !== activeTeam.id,
+      );
+
+      if (otherTeams.length === 0) {
+        socket.emit("round:finishResult", {
+          ok: false,
+          error: "Es gibt kein anderes Team, das Punkte erhalten könnte.",
+        });
+        return;
+      }
+
+      const lossPoints = Math.floor(bid / 2);
+
+      otherTeams.forEach((team) => {
+        team.score += lossPoints;
+      });
+
+      const activeTeamName = activeTeam.name;
+      const receiverNames = otherTeams.map((team) => team.name).join(", ");
+      const roundTitle = gameState.currentRound.title;
+      const receiverText =
+        otherTeams.length === 1
+          ? `${receiverNames} erhält +${lossPoints} Punkte.`
+          : `${receiverNames} erhalten jeweils +${lossPoints} Punkte.`;
+
+      addHistoryEntry({
+        type: "loss",
+        roundId: gameState.currentRound.id,
+        roundTitle,
+        activeTeamId: activeTeam.id,
+        activeTeamName,
+        bid,
+        awardedPoints: otherTeams.map((team) => ({
+          teamId: team.id,
+          teamName: team.name,
+          teamColor: normalizeTeamColor(
+            team.color,
+            getDefaultTeamColor(team.id),
+          ),
+          points: lossPoints,
+        })),
+      });
+
+      markCurrentRoundAsPlayed();
+      resetRoundTeamState();
+
+      persistAndBroadcast();
+
+      socket.emit("round:finishResult", {
+        ok: true,
+        message: `Runde abgeschlossen: ${roundTitle}\n${activeTeamName} scheitert.\n${receiverText}`,
+      });
+    } catch (error) {
+      console.error(
+        "Runde konnte nicht als verloren abgeschlossen werden:",
+        error,
+      );
+
       socket.emit("round:finishResult", {
         ok: false,
-        error: "Es ist keine Runde geladen."
+        error: "Die Runde konnte nicht abgeschlossen werden.",
       });
-      return;
     }
+  });
 
-    const activeTeam = getActiveTeam();
-    const bid = getActiveBidNumber();
-
-    if (!activeTeam) {
-      socket.emit("round:finishResult", {
-        ok: false,
-        error: "Es ist kein aktives Team gesetzt."
-      });
-      return;
-    }
-
-    if (bid === null) {
-      socket.emit("round:finishResult", {
-        ok: false,
-        error: "Das aktive Team braucht ein gültiges Gebot."
-      });
-      return;
-    }
-
-    const otherTeams = gameState.teams.filter(team => team.id !== activeTeam.id);
-
-    if (otherTeams.length === 0) {
-      socket.emit("round:finishResult", {
-        ok: false,
-        error: "Es gibt kein anderes Team, das Punkte erhalten könnte."
-      });
-      return;
-    }
-
-    const lossPoints = Math.floor(bid / 2);
-
-    otherTeams.forEach(team => {
-	  team.score += lossPoints;
-	});
-
-	const activeTeamName = activeTeam.name;
-	const receiverNames = otherTeams.map(team => team.name).join(", ");
-	const roundTitle = gameState.currentRound.title;
-  const receiverText = otherTeams.length === 1
-  ? `${receiverNames} erhält +${lossPoints} Punkte.`
-  : `${receiverNames} erhalten jeweils +${lossPoints} Punkte.`;
-
-	addHistoryEntry({
-	  type: "loss",
-	  roundId: gameState.currentRound.id,
-	  roundTitle,
-	  activeTeamId: activeTeam.id,
-	  activeTeamName,
-	  bid,
-	  awardedPoints: otherTeams.map(team => ({
-		teamId: team.id,
-		teamName: team.name,
-		teamColor: normalizeTeamColor(team.color, getDefaultTeamColor(team.id)),
-		points: lossPoints
-	  }))
-	});
-
-	markCurrentRoundAsPlayed();
-	resetRoundTeamState();
-
-    persistAndBroadcast();
-
-    socket.emit("round:finishResult", {
-      ok: true,
-      message: `Runde abgeschlossen: ${roundTitle}\n${activeTeamName} scheitert.\n${receiverText}`
-    });
-  } catch (error) {
-    console.error("Runde konnte nicht als verloren abgeschlossen werden:", error);
-
-    socket.emit("round:finishResult", {
-      ok: false,
-      error: "Die Runde konnte nicht abgeschlossen werden."
-    });
-  }
-});
+  // ----- History -----
 
   socket.on("history:clear", () => {
-	gameState.history = [];
-	persistAndBroadcast();
+    gameState.history = [];
+    persistAndBroadcast();
   });
+
+  // ----- Timer -----
 
   socket.on("timer:setDuration", (minutes) => {
     const parsedMinutes = Number(minutes);
@@ -1724,14 +1839,20 @@ socket.on("round:delete", (roundId) => {
     persistAndBroadcast();
   });
 
+  // ----- Connection and game reset -----
+
   socket.on("disconnect", () => {
     console.log("Ein Fenster wurde getrennt:", socket.id);
   });
 
-	socket.on("game:reset", () => {
-	resetGameState();
+  socket.on("game:reset", () => {
+    resetGameState();
   });
 });
+
+// =====================================
+// Startup
+// =====================================
 
 loadSettings();
 loadFavorites();
