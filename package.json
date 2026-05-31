@@ -1,18 +1,21 @@
 {
   "name": "listen-legenden",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Lokale Quizshow-App fuer Listen- und Ranking-Spiele.",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
     "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "express": "^5.2.1",
-    "socket.io": "^4.8.3"
-  }
+    "express": "^4.18.2",
+    "socket.io": "^4.7.5"
+  },
+  "keywords": [
+    "quiz",
+    "gameshow",
+    "local",
+    "party-game"
+  ],
+  "author": "HeckMeck",
+  "license": "MIT"
 }
