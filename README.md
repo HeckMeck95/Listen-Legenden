@@ -139,7 +139,7 @@ http://localhost:3000/player.html
 + Hinzufügen von Sloxicon Quiz  
 
 ## Etwas entfernte Zukunft
-***Dadurch das ich für diese Spielshows eine Online Funktion brauche, damit die Spieler mit der SHow interagieren können***  
+***Dadurch das ich für diese Spielshows eine Online Funktion brauche, damit die Spieler mit der Show interagieren können***  
 ***(Chips setzen beim Poker, Buzzernutzung) wird sich das ganze wohl etwas weiter nach hinten verschieben***  
   
 + Hinzufügen von Onlineunterstützung für Buzzer/Interaktive Spielshows  
