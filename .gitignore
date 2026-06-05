@@ -6,3 +6,4 @@ Thumbs.db
 .env
 rounds/*test*.json
 Listen-Legenden.code-workspace
+.VSCodeCounter
