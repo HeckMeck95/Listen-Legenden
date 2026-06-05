@@ -116,7 +116,7 @@ Installiere [Node.js](https://nodejs.org/en)
 
 Alternativ kann die App auch über die Konsole gestartet werden:  
   
-`nmp install`  
+`npm install`  
 `npm start`  
 Danach im Browser auf  
 <http://localhost:3000/moderator.html>  
